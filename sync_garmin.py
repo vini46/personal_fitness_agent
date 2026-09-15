@@ -6,46 +6,57 @@ import tarfile
 import tempfile
 from datetime import datetime, timedelta, timezone
 from garminconnect import Garmin
+import garth
 
 
 def restore_session() -> Garmin:
-    """Restores Garmin session from base64 secret or falls back to credentials."""
+    """Restores Garmin session using garth directly or falls back to credentials."""
     b64_tokens = os.environ.get("GARMIN_TOKENS_BASE64")
     email = os.environ.get("GARMIN_EMAIL")
     password = os.environ.get("GARMIN_PASSWORD")
 
-    token_store_dir = None
+    token_dir = None
 
     if b64_tokens:
         try:
             compressed_data = base64.b64decode(b64_tokens)
             buf = io.BytesIO(compressed_data)
 
-            # Extract tokens to a persistent temp folder for execution lifetime
-            token_store_dir = tempfile.mkdtemp()
+            temp_extract = tempfile.mkdtemp()
             with tarfile.open(fileobj=buf, mode="r:gz") as tar:
-                tar.extractall(path=token_store_dir)
+                tar.extractall(path=temp_extract)
 
-            if os.path.exists(os.path.join(token_store_dir, ".garminconnect")):
-                token_store_dir = os.path.join(token_store_dir, ".garminconnect")
+            token_dir = temp_extract
+            if os.path.exists(os.path.join(temp_extract, ".garminconnect")):
+                token_dir = os.path.join(temp_extract, ".garminconnect")
 
-            print(f"Loading session from token store: {token_store_dir}")
+            print(f"Loading session tokens from: {token_dir}")
         except Exception as e:
             print(f"Failed to unpack GARMIN_TOKENS_BASE64: {e}")
-            token_store_dir = None
+            token_dir = None
 
-    # Initialize Garmin client using token_store and credentials fallback
-    api = Garmin(
-        email=email,
-        password=password,
-        is_cn=False,
+    # 1. Try restoring via garth resume if token directory exists
+    if token_dir and os.path.exists(token_dir):
+        try:
+            garth.resume(token_dir)
+            api = Garmin()
+            api.garth = garth.client
+            print("Successfully authenticated using stored tokens!")
+            return api
+        except Exception as e:
+            print(f"Session token resume failed: {e}. Falling back to credentials...")
+
+    # 2. Fallback to Email + Password login
+    if email and password:
+        print("Authenticating using email and password...")
+        api = Garmin(email, password)
+        api.login()
+        print("Successfully authenticated with credentials!")
+        return api
+
+    raise RuntimeError(
+        "Failed to authenticate with Garmin: Tokens invalid/expired and no credentials provided."
     )
-
-    # Login via token_store without manual garth calls
-    api.login(token_store=token_store_dir)
-    print("Successfully authenticated with Garmin!")
-    return api
-
 
 def filter_hr_spikes(hr_stream: list, threshold: int = 15) -> tuple[list, int]:
     """Filters single-sample optical wrist heart rate artifacts."""

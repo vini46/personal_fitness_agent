@@ -33,6 +33,7 @@ jobs:
       - name: Run OpenRouter Analysis Agent
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL }}
         run: python agent_analyzer.py
 
       - name: Publish to GitHub Pages

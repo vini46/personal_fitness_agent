@@ -2,43 +2,48 @@ import base64
 import io
 import json
 import os
-import shutil
 import tarfile
 import tempfile
 from datetime import datetime, timedelta, timezone
 from garminconnect import Garmin
-import garth
 
 
 def restore_session() -> Garmin:
+    """Restores Garmin session from base64 secret or falls back to credentials."""
     b64_tokens = os.environ.get("GARMIN_TOKENS_BASE64")
-    if not b64_tokens:
-        raise ValueError("GARMIN_TOKENS_BASE64 environment secret is missing!")
+    email = os.environ.get("GARMIN_EMAIL")
+    password = os.environ.get("GARMIN_PASSWORD")
 
-    compressed_data = base64.b64decode(b64_tokens)
-    buf = io.BytesIO(compressed_data)
+    token_store_dir = None
 
-    tmp_dir = tempfile.mkdtemp()
-    with tarfile.open(fileobj=buf, mode="r:gz") as tar:
-        tar.extractall(path=tmp_dir)
+    if b64_tokens:
+        try:
+            compressed_data = base64.b64decode(b64_tokens)
+            buf = io.BytesIO(compressed_data)
 
-    session_path = (
-        os.path.join(tmp_dir, ".garminconnect")
-        if os.path.exists(os.path.join(tmp_dir, ".garminconnect"))
-        else tmp_dir
+            # Extract tokens to a persistent temp folder for execution lifetime
+            token_store_dir = tempfile.mkdtemp()
+            with tarfile.open(fileobj=buf, mode="r:gz") as tar:
+                tar.extractall(path=token_store_dir)
+
+            if os.path.exists(os.path.join(token_store_dir, ".garminconnect")):
+                token_store_dir = os.path.join(token_store_dir, ".garminconnect")
+
+            print(f"Loading session from token store: {token_store_dir}")
+        except Exception as e:
+            print(f"Failed to unpack GARMIN_TOKENS_BASE64: {e}")
+            token_store_dir = None
+
+    # Initialize Garmin client using token_store and credentials fallback
+    api = Garmin(
+        email=email,
+        password=password,
+        is_cn=False,
     )
 
-    # Resume OAuth session using garth
-    garth.resume(session_path)
-
-    # Attach garth session to Garmin client
-    api = Garmin()
-    api.garth = garth.client
-    api.display_name = (
-        garth.client.profile.get("displayName") if garth.client.profile else None
-    )
-
-    print("Successfully authenticated with Garmin via garth!")
+    # Login via token_store without manual garth calls
+    api.login(token_store=token_store_dir)
+    print("Successfully authenticated with Garmin!")
     return api
 
 

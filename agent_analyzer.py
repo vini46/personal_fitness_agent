@@ -18,7 +18,7 @@ def format_pace(pace):
     if seconds == 60:
         minutes += 1
         seconds = 0
-    return f"{minutes}:{seconds:02d}/mi"
+    return f"{minutes}:{seconds:02d}/km"
 
 
 def format_duration(seconds):
@@ -53,7 +53,7 @@ def clean_json_response(content):
 
 
 def pace_from_speed(speed):
-    return 26.8224 / speed if speed and speed > 0 else None
+    return 16.6667 / speed if speed and speed > 0 else None
 
 
 def rolling_average(values, window):
@@ -78,7 +78,7 @@ def derive_training_evidence(run_data):
     threshold_candidates = []
     for run in detailed_runs:
         clean_hr = [value for value in run["clean_hr"] if value is not None]
-        paces = [value for value in run.get("pace_min_mile", []) if value is not None]
+        paces = [value for value in run.get("pace_min_km", []) if value is not None]
         duration = run.get("duration_s") or len(clean_hr)
         if duration >= 1200 and clean_hr and paces:
             threshold_candidates.append({
@@ -86,15 +86,15 @@ def derive_training_evidence(run_data):
                 "date": run.get("date"),
                 "activityId": run.get("activityId"),
                 "duration_s": duration,
-                "best_sustained_pace_min_mile": round(statistics.mean(sorted(paces)[:max(30, len(paces) // 10)]), 2),
+                "best_sustained_pace_min_km": round(statistics.mean(sorted(paces)[:max(30, len(paces) // 10)]), 2),
                 "hardest_sustained_hr": round(statistics.mean(sorted(clean_hr)[-max(30, len(clean_hr) // 10):]), 1),
                 "peak_clean_hr": max(clean_hr),
             })
-    threshold_candidates.sort(key=lambda item: item["best_sustained_pace_min_mile"])
+    threshold_candidates.sort(key=lambda item: item["best_sustained_pace_min_km"])
     best_threshold = threshold_candidates[0] if threshold_candidates else None
     max_hr = max_candidate["value"] if max_candidate else None
     threshold_hr = best_threshold["hardest_sustained_hr"] if best_threshold else None
-    threshold_pace = best_threshold["best_sustained_pace_min_mile"] if best_threshold else None
+    threshold_pace = best_threshold["best_sustained_pace_min_km"] if best_threshold else None
 
     zone_basis = threshold_hr or (max_hr * 0.85 if max_hr else None)
     zone_definitions = []
@@ -111,16 +111,33 @@ def derive_training_evidence(run_data):
         count = sum(zone["lower_bpm"] <= value < zone["upper_bpm"] for value in latest_hr if value is not None)
         zone_time.append({**zone, "seconds": count, "percent": round(count / len(latest_hr) * 100, 1) if latest_hr else 0})
 
+    activity_trends = []
+    for run in runs:
+        avg_hr = run.get("reported_avg_hr") or run.get("computed_avg_hr")
+        pace = pace_from_speed(run.get("reported_avg_speed_m_s"))
+        if threshold_hr and avg_hr:
+            effort = "quality" if avg_hr >= threshold_hr * 0.95 else "steady" if avg_hr >= threshold_hr * 0.85 else "easy"
+        else:
+            effort = "unclassified"
+        activity_trends.append({
+            "activityId": run.get("activityId"),
+            "effort": effort,
+            "pace_min_km": round(pace, 2) if pace else None,
+            "avg_hr": avg_hr,
+            "distance_km": run.get("distance_km"),
+        })
+
     return {
         "runs_with_detail": len(detailed_runs),
         "max_hr": max_candidate,
         "threshold": {
             "heart_rate": threshold_hr,
-            "pace_min_mile": threshold_pace,
+            "pace_min_km": threshold_pace,
             "basis": "hardest sustained effort" if best_threshold else "unavailable: no run with at least 20 minutes of detailed data",
             "candidate": best_threshold,
         },
         "zones": zone_time,
+        "activity_trends": activity_trends,
         "validation_failures": [
             run for run in detailed_runs
             if abs(run.get("hr_difference") or 0) > 10 or abs(run.get("speed_difference_m_s") or 0) > 0.5
@@ -131,9 +148,19 @@ def derive_training_evidence(run_data):
 def request_insights(client, model, run_data):
     summary = run_data["summary"]
     validation = run_data["validation"]
-    historical = run_data.get("all_historical_runs_summary", [])
+    historical = [
+        {
+            key: run.get(key)
+            for key in (
+                "activityId", "date", "name", "distance_km", "duration_s",
+                "reported_avg_hr", "computed_avg_hr", "reported_max_hr",
+                "reported_avg_speed_m_s", "hr_spikes_removed",
+            )
+        }
+        for run in run_data.get("all_historical_runs_summary", [])
+    ]
     clean_hr = [value for value in run_data.get("per_second_clean_hr", []) if value is not None]
-    pace = [value for value in run_data.get("per_second_paces_min_mile", []) if value is not None]
+    pace = [value for value in run_data.get("per_second_paces_min_km", []) if value is not None]
     evidence = run_data["derived_evidence"]
     prompt = f"""
 You are a careful running coach. Analyze this Garmin run using only the supplied data.
@@ -148,12 +175,13 @@ Run summary: {json.dumps(summary)}
 Validation: {json.dumps(validation)}
 Clean HR range: {min(clean_hr) if clean_hr else None}-{max(clean_hr) if clean_hr else None},
 clean HR average: {round(statistics.mean(clean_hr), 1) if clean_hr else None}
-Pace range: {min(pace) if pace else None}-{max(pace) if pace else None} min/mile
-Recent historical runs: {json.dumps(historical[:20])}
+Pace range: {min(pace) if pace else None}-{max(pace) if pace else None} min/km
+All historical running activities: {json.dumps(historical)}
 Splits: {json.dumps(run_data.get("splits", [])[:30])}
 Derived evidence computed locally (do not override it): {json.dumps(evidence)}
-Explain max HR activity/date, threshold evidence, heat/negative-split limitations if data is unavailable,
-and the practical meaning of each zone. Never claim a paid app's zones were identified unless supplied.
+Explain max HR activity/date, threshold evidence, cross-activity trends, and
+heat/negative-split limitations if data is unavailable. Never claim a paid app's
+zones were identified unless supplied.
 """
 
     for attempt in range(3):
@@ -193,7 +221,6 @@ and the practical meaning of each zone. Never claim a paid app's zones were iden
         "heart_rate_insight": "Heart-rate values shown here use the cleaned per-second stream.",
         "threshold_assessment": "A single run is not enough evidence to establish threshold heart rate or threshold pace.",
         "training_zones": "The bars are provisional observed HR bands, not validated training zones.",
-        "zone_comparison": "No app zone model was supplied, so this page does not claim an app-vs-athlete comparison.",
         "next_run": "Keep the next run easy enough to compare pace and heart rate with this effort.",
         "confidence": "Data visualization: high. Coaching interpretation: limited.",
         "caveats": "Threshold and training-zone conclusions need multiple comparable efforts, temperature, terrain, and verified effort context.",
@@ -204,17 +231,17 @@ def build_dashboard(run_data, insights):
     summary = run_data["summary"]
     validation = run_data["validation"]
     hr = run_data.get("per_second_clean_hr", [])
-    pace = run_data.get("per_second_paces_min_mile", [])
+    pace = run_data.get("per_second_paces_min_km", [])
     split_rows = run_data.get("splits", [])
     hr_bands = observed_hr_bands(hr)
     chart_data = {"hr": hr, "pace": pace}
     evidence = run_data["derived_evidence"]
     average_speed = summary.get("reported_avg_speed_m_s") or 0
     cards = [
-        ("Distance", f"{summary.get('distance_miles', 0):.2f} mi"),
+        ("Distance", f"{summary.get('distance_km', 0):.2f} km"),
         ("Moving time", format_duration(summary.get("duration_seconds"))),
         ("Average HR", f"{summary.get('reported_avg_hr') or validation.get('computed_avg_hr') or '-'} bpm"),
-        ("Avg pace", format_pace(26.8224 / average_speed if average_speed else None)),
+        ("Avg pace", format_pace(pace_from_speed(average_speed))),
     ]
     card_html = "".join(
         f'<div class="metric"><span>{html.escape(label)}</span><strong>{html.escape(value)}</strong></div>'
@@ -249,7 +276,13 @@ def build_dashboard(run_data, insights):
     ) or '<tr><td colspan="4">No threshold evidence was available to derive zones.</td></tr>'
     max_hr = evidence.get("max_hr") or {}
     threshold = evidence.get("threshold") or {}
-    evidence_html = f'''<div class="evidence-grid"><div><span>Clean sustained max HR</span><strong>{max_hr.get("value", "-")} bpm</strong><small>{html.escape(str(max_hr.get("activity") or "No qualifying effort"))} · {html.escape(str(max_hr.get("date") or ""))}</small></div><div><span>Threshold HR</span><strong>{threshold.get("heart_rate") or "-"} bpm</strong><small>{html.escape(str(threshold.get("basis")))}</small></div><div><span>Threshold pace</span><strong>{format_pace(threshold.get("pace_min_mile"))}</strong><small>Candidate from sustained efforts</small></div><div><span>Detailed runs</span><strong>{evidence.get("runs_with_detail", 0)}</strong><small>{len(evidence.get("validation_failures", []))} validation warnings</small></div></div>'''
+    effort_by_id = {item["activityId"]: item["effort"] for item in evidence.get("activity_trends", [])}
+    history_rows = "".join(
+        f'<tr><td>{html.escape(str(run.get("date") or "-")[:10])}</td><td>{html.escape(str(run.get("name") or "Run"))}</td><td>{run.get("distance_km", 0):.2f}</td><td>{format_pace(pace_from_speed(run.get("reported_avg_speed_m_s")))}</td><td>{run.get("reported_avg_hr") or "-"}</td><td>{run.get("reported_max_hr") or "-"}</td><td>{format_duration(run.get("duration_s"))}</td><td>{effort_by_id.get(run.get("activityId"), "unclassified")}</td><td>{run.get("hr_spikes_removed", 0)}</td></tr>'
+        for run in run_data.get("all_historical_runs_summary", [])
+    ) or '<tr><td colspan="9">No historical activity evidence was returned.</td></tr>'
+    evidence_html = f'''<div class="evidence-grid"><div><span>Clean sustained max HR</span><strong>{max_hr.get("value", "-")} bpm</strong><small>{html.escape(str(max_hr.get("activity") or "No qualifying effort"))} · {html.escape(str(max_hr.get("date") or ""))}</small></div><div><span>Threshold HR</span><strong>{threshold.get("heart_rate") or "-"} bpm</strong><small>{html.escape(str(threshold.get("basis")))}</small></div><div><span>Threshold pace</span><strong>{format_pace(threshold.get("pace_min_km"))}</strong><small>Candidate from sustained efforts</small></div><div><span>Detailed runs</span><strong>{evidence.get("runs_with_detail", 0)}</strong><small>{len(evidence.get("validation_failures", []))} validation warnings</small></div></div>'''
+    evidence_html += f'''<h3>All analyzed activities</h3><p class="muted">Every running activity with returned detail evidence. Pace is minutes per kilometer.</p><table><thead><tr><th>Date</th><th>Activity</th><th>Distance km</th><th>Avg pace</th><th>Avg HR</th><th>Max HR</th><th>Time</th><th>Effort</th><th>Spikes</th></tr></thead><tbody>{history_rows}</tbody></table>'''
     title = html.escape(summary.get("name") or "Latest quality run")
     return f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -267,7 +300,7 @@ main{{max-width:1080px;margin:auto;padding:28px 18px 60px}}header{{display:flex;
 <section class="metrics">{card_html}</section><div class="layout"><section class="panel"><h2>Per-second effort</h2><canvas id="chart" aria-label="Interactive heart rate and pace chart"></canvas><div class="legend"><span><i class="dot"></i>Heart rate</span><span><i class="dot teal"></i>Pace</span><span id="hover" class="muted">Hover the chart for a reading</span></div></section>
 <section class="panel"><h2>Coach read</h2><div class="insights">{insight_html}</div><p class="note"><strong>Confidence:</strong> {html.escape(insights['confidence'])}<br><strong>Limits:</strong> {html.escape(insights['caveats'])}</p></section>
 <section class="panel"><h2>Heart-rate distribution</h2><p class="muted">Provisional observed bands from the cleaned stream, not validated physiological zones.</p>{bands_html}</section><section class="panel"><h2>Evidence behind the zones</h2>{evidence_html}<table><thead><tr><th>Zone</th><th>HR range</th><th>Time</th><th>Share</th></tr></thead><tbody>{zone_html}</tbody></table><p class="note">Derived from cleaned per-second data. These are evidence-based estimates, not medical guidance. App-specific zones require the app's configured basis.</p></section><section class="panel wide"><h2>Splits and laps</h2><table><thead><tr><th>Type</th><th>Value</th><th>Avg speed</th><th>Avg HR</th><th>Elevation gain</th></tr></thead><tbody>{split_html}</tbody></table></section></div></main>
-<script>const data={json.dumps(chart_data,separators=(',', ':'))};const canvas=document.getElementById('chart'),ctx=canvas.getContext('2d'),hover=document.getElementById('hover');function draw(){{const d=devicePixelRatio||1,w=canvas.clientWidth,h=canvas.clientHeight;canvas.width=w*d;canvas.height=h*d;ctx.scale(d,d);ctx.clearRect(0,0,w,h);const series=[['hr','#e85d3f',data.hr],['pace','#117c78',data.pace]],all=series.flatMap(x=>x[2].filter(v=>v!=null));if(!all.length)return;const min=Math.min(...all),max=Math.max(...all);series.forEach(([name,color,values])=>{{ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;values.forEach((v,i)=>{{if(v==null)return;const x=i/(values.length-1)*w,y=h-(v-min)/(max-min||1)*(h-20)-10;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}});ctx.stroke()}});canvas.onmousemove=e=>{{const i=Math.min(data.hr.length-1,Math.max(0,Math.round((e.offsetX/w)*(data.hr.length-1))));hover.textContent=`${{i}}s · HR ${{data.hr[i]??'-'}} bpm · Pace ${{data.pace[i]??'-'}} min/mi`}}}};addEventListener('resize',draw);draw();</script></body></html>'''
+<script>const data={json.dumps(chart_data,separators=(',', ':'))};const canvas=document.getElementById('chart'),ctx=canvas.getContext('2d'),hover=document.getElementById('hover');function draw(){{const d=devicePixelRatio||1,w=canvas.clientWidth,h=canvas.clientHeight;canvas.width=w*d;canvas.height=h*d;ctx.scale(d,d);ctx.clearRect(0,0,w,h);const series=[['hr','#e85d3f',data.hr],['pace','#117c78',data.pace]],all=series.flatMap(x=>x[2].filter(v=>v!=null));if(!all.length)return;const min=Math.min(...all),max=Math.max(...all);series.forEach(([name,color,values])=>{{ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;values.forEach((v,i)=>{{if(v==null)return;const x=i/(values.length-1)*w,y=h-(v-min)/(max-min||1)*(h-20)-10;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}});ctx.stroke()}});canvas.onmousemove=e=>{{const i=Math.min(data.hr.length-1,Math.max(0,Math.round((e.offsetX/w)*(data.hr.length-1))));hover.textContent=`${{i}}s · HR ${{data.hr[i]??'-'}} bpm · Pace ${{data.pace[i]??'-'}} min/km`}}}};addEventListener('resize',draw);draw();</script></body></html>'''
 
 
 def main():

@@ -114,6 +114,7 @@ def extract_activity_evidence(details: dict, summary: dict, splits: dict) -> dic
         "activityId": summary.get("activityId"),
         "date": summary.get("startTimeLocal"),
         "name": summary.get("activityName"),
+        "activity_type": (summary.get("activityType") or {}).get("typeKey") or summary.get("activityTypeKey") or "unknown",
         "distance_m": summary.get("distance"),
         "distance_km": round(summary.get("distance", 0) / 1000, 2),
         "duration_s": summary.get("duration"),
@@ -164,20 +165,26 @@ def fetch_data():
     fetch_wellness_data(client, end_date)
 
     print(
-        f"Fetching running activities between {start_date.strftime('%Y-%m-%d')} and {end_date.strftime('%Y-%m-%d')}..."
+        f"Fetching all activities between {start_date.strftime('%Y-%m-%d')} and {end_date.strftime('%Y-%m-%d')}..."
     )
     activities = client.get_activities_by_date(
         start_date.strftime("%Y-%m-%d"),
         end_date.strftime("%Y-%m-%d"),
-        "running",
     )
 
     if not activities:
-        raise RuntimeError("No running activities found in last 180 days.")
+        raise RuntimeError("No activities found in last 180 days.")
 
-    print(f"Found {len(activities)} running activities.")
+    def is_running(activity):
+        activity_type = activity.get("activityType") or {}
+        type_key = activity_type.get("typeKey") or activity.get("activityTypeKey") or ""
+        name = (activity.get("activityName") or "").lower()
+        return type_key in {"running", "trail_running", "treadmill_running"} or "run" in name
 
-    latest_run = activities[0]
+    running_activities = [activity for activity in activities if is_running(activity)]
+    print(f"Found {len(activities)} total activities, including {len(running_activities)} running activities.")
+
+    latest_run = running_activities[0] if running_activities else activities[0]
     activity_id = latest_run["activityId"]
     print(
         f"Processing Activity ID: {activity_id} ({latest_run.get('activityName')})"

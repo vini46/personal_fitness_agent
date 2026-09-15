@@ -66,9 +66,16 @@ def rolling_average(values, window):
     )
 
 
+def is_running_activity(run):
+    activity_type = (run.get("activity_type") or "").lower()
+    name = (run.get("name") or "").lower()
+    return activity_type in {"running", "trail_running", "treadmill_running"} or "run" in name
+
+
 def derive_training_evidence(run_data):
     runs = run_data.get("all_historical_runs_summary", [])
-    detailed_runs = [run for run in runs if run.get("clean_hr")]
+    running_runs = [run for run in runs if is_running_activity(run)]
+    detailed_runs = [run for run in running_runs if run.get("clean_hr")]
     max_candidate = None
     for run in detailed_runs:
         sustained = rolling_average(run["clean_hr"], 30)

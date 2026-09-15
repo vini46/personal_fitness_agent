@@ -1,0 +1,41 @@
+name: Daily Garmin Run Analysis Pipeline
+
+on:
+  schedule:
+    - cron: '0 4 * * *'  # Runs daily at 4:00 AM UTC
+  workflow_dispatch:     # Allows manual on-demand execution
+
+permissions:
+  contents: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch and Clean Garmin Data
+        env:
+          GARMIN_TOKENS_BASE64: ${{ secrets.GARMIN_TOKENS_BASE64 }}
+        run: python sync_garmin.py
+
+      - name: Run OpenRouter Analysis Agent
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: python agent_analyzer.py
+
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
+          destination_dir: ./

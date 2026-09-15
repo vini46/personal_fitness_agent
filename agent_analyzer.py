@@ -2,15 +2,20 @@ import os
 import json
 from openai import OpenAI
 
-openrouter_api_key = os.environ.get("OPENROUTER_API_KEY")
+openrouter_api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
 if not openrouter_api_key:
     raise RuntimeError(
         "OPENROUTER_API_KEY is not set. Add it as a GitHub Actions repository secret."
+    )
+if not openrouter_api_key.startswith("sk-or-"):
+    raise RuntimeError(
+        "OPENROUTER_API_KEY is not an OpenRouter key. Create a key at openrouter.ai/keys."
     )
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=openrouter_api_key,
+    default_headers={"Authorization": f"Bearer {openrouter_api_key}"},
 )
 
 with open("latest_run.json", "r") as f:

@@ -7,10 +7,10 @@ import tarfile
 import tempfile
 from datetime import datetime, timedelta, timezone
 from garminconnect import Garmin
+import garth
 
 
 def restore_session() -> Garmin:
-    """Restores session using stored base64-encoded session archive."""
     b64_tokens = os.environ.get("GARMIN_TOKENS_BASE64")
     if not b64_tokens:
         raise ValueError("GARMIN_TOKENS_BASE64 environment secret is missing!")
@@ -19,24 +19,27 @@ def restore_session() -> Garmin:
     buf = io.BytesIO(compressed_data)
 
     tmp_dir = tempfile.mkdtemp()
-    try:
-        with tarfile.open(fileobj=buf, mode="r:gz") as tar:
-            tar.extractall(path=tmp_dir)
+    with tarfile.open(fileobj=buf, mode="r:gz") as tar:
+        tar.extractall(path=tmp_dir)
 
-        session_path = tmp_dir
-        if os.path.exists(os.path.join(tmp_dir, ".garminconnect")):
-            session_path = os.path.join(tmp_dir, ".garminconnect")
+    session_path = (
+        os.path.join(tmp_dir, ".garminconnect")
+        if os.path.exists(os.path.join(tmp_dir, ".garminconnect"))
+        else tmp_dir
+    )
 
-        print(f"Restoring Garmin session from: {session_path}")
+    # Resume OAuth session using garth
+    garth.resume(session_path)
 
-        api = Garmin()
-        # Use token_store keyword argument instead of positional argument
-        api.login(token_store=session_path)
-        print("Successfully authenticated with Garmin!")
-        return api
-    except Exception as e:
-        print(f"Garmin restore error: {e}")
-        raise e
+    # Attach garth session to Garmin client
+    api = Garmin()
+    api.garth = garth.client
+    api.display_name = (
+        garth.client.profile.get("displayName") if garth.client.profile else None
+    )
+
+    print("Successfully authenticated with Garmin via garth!")
+    return api
 
 
 def filter_hr_spikes(hr_stream: list, threshold: int = 15) -> tuple[list, int]:

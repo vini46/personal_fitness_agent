@@ -100,7 +100,7 @@ def extract_activity_evidence(details: dict, summary: dict, splits: dict) -> dic
 
     clean_hr_stream, spikes_removed = filter_hr_spikes(hr_stream)
     paces = [
-        round(26.8224 / speed, 2) if speed and speed > 0 and 26.8224 / speed < 30 else None
+        round(16.6667 / speed, 2) if speed and speed > 0 and 16.6667 / speed < 30 else None
         for speed in speed_stream
     ]
     valid_hr = [value for value in clean_hr_stream if value is not None]
@@ -115,6 +115,7 @@ def extract_activity_evidence(details: dict, summary: dict, splits: dict) -> dic
         "date": summary.get("startTimeLocal"),
         "name": summary.get("activityName"),
         "distance_m": summary.get("distance"),
+        "distance_km": round(summary.get("distance", 0) / 1000, 2),
         "duration_s": summary.get("duration"),
         "reported_avg_hr": reported_avg_hr,
         "computed_avg_hr": computed_avg_hr,
@@ -126,7 +127,7 @@ def extract_activity_evidence(details: dict, summary: dict, splits: dict) -> dic
         "hr_spikes_removed": spikes_removed,
         "metric_map": metric_map,
         "clean_hr": clean_hr_stream,
-        "pace_min_mile": paces,
+        "pace_min_km": paces,
         "splits": splits.get("lapDTOs", []),
     }
 
@@ -167,7 +168,7 @@ def fetch_data():
 
     latest_evidence = extract_activity_evidence(details, latest_run, splits)
     historical_evidence = []
-    for activity in activities[:20]:
+    for activity in activities:
         if activity.get("activityId") == activity_id:
             historical_evidence.append(latest_evidence)
             continue
@@ -183,7 +184,7 @@ def fetch_data():
             print(f"Warning: Could not fetch detail evidence for {activity.get('activityId')}: {e}")
 
     clean_hr_stream = latest_evidence["clean_hr"]
-    paces_min_mile = latest_evidence["pace_min_mile"]
+    paces_min_km = latest_evidence["pace_min_km"]
     computed_avg_hr = latest_evidence["computed_avg_hr"] or 0
     threw_out_count = latest_evidence["hr_spikes_removed"]
     reported_avg_hr = latest_run.get("averageHR", 0)
@@ -194,9 +195,7 @@ def fetch_data():
             "name": latest_run.get("activityName"),
             "date": latest_run.get("startTimeLocal"),
             "distance_meters": latest_run.get("distance"),
-            "distance_miles": round(
-                latest_run.get("distance", 0) / 1609.34, 2
-            ),
+            "distance_km": round(latest_run.get("distance", 0) / 1000, 2),
             "duration_seconds": latest_run.get("duration"),
             "reported_avg_hr": reported_avg_hr,
             "reported_max_hr": latest_run.get("maxHR"),
@@ -213,7 +212,7 @@ def fetch_data():
         },
         "splits": splits.get("lapDTOs", []),
         "per_second_clean_hr": clean_hr_stream,
-        "per_second_paces_min_mile": paces_min_mile,
+        "per_second_paces_min_km": paces_min_km,
         "all_historical_runs_summary": historical_evidence,
     }
 

@@ -27,7 +27,7 @@ Perform the following:
 """
 
 response = client.chat.completions.create(
-    model="google/gemini-2.0-flash-lite-001:free",  # Free model on OpenRouter
+    model="google/gemma-4-31b-it:free",  # Free model on OpenRouter
     messages=[{"role": "user", "content": prompt}],
 )
 

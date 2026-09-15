@@ -24,9 +24,9 @@ def restore_session() -> Garmin:
     token_path = os.path.expanduser("~/.garminconnect")
     print(f"Restored session tokens to {token_path}")
 
-    # 2. Pass tokenstore to Garmin client initialization, then call login with no parameters
-    client = Garmin(tokenstore=token_path)
-    client.login()
+    # 2. Instantiate Garmin with no args, then pass token path to login()
+    client = Garmin()
+    client.login(token_path)
     return client
 
 

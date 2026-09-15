@@ -3,6 +3,7 @@ import io
 import json
 import os
 import shutil
+import tarfile
 import tempfile
 from datetime import datetime, timedelta, timezone
 from garminconnect import Garmin

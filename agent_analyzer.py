@@ -1,6 +1,7 @@
 import os
 import json
-from openai import OpenAI
+import time
+from openai import OpenAI, RateLimitError
 
 openrouter_api_key = os.environ.get("OPENROUTER_API_KEY", "").strip()
 if not openrouter_api_key:
@@ -37,10 +38,29 @@ Perform the following:
    - State clearly the exact seconds-per-mile difference between the real easy pace ceiling and typical default zone model ceilings.
 """
 
-response = client.chat.completions.create(
-    model="google/gemma-4-31b-it:free",  # Free model on OpenRouter
-    messages=[{"role": "user", "content": prompt}],
-)
+model = os.environ.get("OPENROUTER_MODEL", "").strip() or "google/gemma-4-31b-it:free"
+response = None
+for attempt in range(3):
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            extra_body={"provider": {"allow_fallbacks": True}},
+        )
+        break
+    except RateLimitError as error:
+        if attempt == 2:
+            raise RuntimeError(
+                f"OpenRouter rate limit persisted for model {model}. "
+                "Set OPENROUTER_MODEL to another available model or retry later."
+            ) from error
+
+        delay_seconds = 5 * (2**attempt)
+        print(
+            f"OpenRouter rate limit for {model}; retrying in "
+            f"{delay_seconds} seconds..."
+        )
+        time.sleep(delay_seconds)
 
 html_report = response.choices[0].message.content
 

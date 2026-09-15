@@ -6,11 +6,10 @@ import tarfile
 import tempfile
 from datetime import datetime, timedelta, timezone
 from garminconnect import Garmin
-import garth
 
 
 def restore_session() -> Garmin:
-    """Restores Garmin session using garth directly or falls back to credentials."""
+    """Restore a Garmin session from cached tokens or credentials."""
     b64_tokens = os.environ.get("GARMIN_TOKENS_BASE64")
     email = os.environ.get("GARMIN_EMAIL")
     password = os.environ.get("GARMIN_PASSWORD")
@@ -35,12 +34,11 @@ def restore_session() -> Garmin:
             print(f"Failed to unpack GARMIN_TOKENS_BASE64: {e}")
             token_dir = None
 
-    # 1. Try restoring via garth resume if token directory exists
+    # Garmin owns the active client; load tokens through its public login API.
     if token_dir and os.path.exists(token_dir):
         try:
-            garth.resume(token_dir)
-            api = Garmin()
-            api.garth = garth.client
+            api = Garmin(email, password)
+            api.login(tokenstore=token_dir)
             print("Successfully authenticated using stored tokens!")
             return api
         except Exception as e:

@@ -79,6 +79,58 @@ def filter_hr_spikes(hr_stream: list, threshold: int = 15) -> tuple[list, int]:
     return cleaned, threw_out
 
 
+def extract_activity_evidence(details: dict, summary: dict, splits: dict) -> dict:
+    """Map detail arrays using Garmin descriptors and return cleaned evidence."""
+    descriptors = details.get("metricDescriptors", [])
+    raw_metrics = details.get("activityDetailMetrics", [])
+    metric_map = {
+        descriptor["key"]: descriptor["metricsIndex"]
+        for descriptor in descriptors
+        if "key" in descriptor and "metricsIndex" in descriptor
+    }
+    hr_idx = metric_map.get("directHeartRate")
+    speed_idx = metric_map.get("directSpeed")
+
+    hr_stream = []
+    speed_stream = []
+    for row in raw_metrics:
+        values = row.get("metrics", [])
+        hr_stream.append(values[hr_idx] if hr_idx is not None and hr_idx < len(values) else None)
+        speed_stream.append(values[speed_idx] if speed_idx is not None and speed_idx < len(values) else None)
+
+    clean_hr_stream, spikes_removed = filter_hr_spikes(hr_stream)
+    paces = [
+        round(26.8224 / speed, 2) if speed and speed > 0 and 26.8224 / speed < 30 else None
+        for speed in speed_stream
+    ]
+    valid_hr = [value for value in clean_hr_stream if value is not None]
+    valid_speed = [value for value in speed_stream if value is not None and value > 0]
+    computed_avg_hr = round(sum(valid_hr) / len(valid_hr), 1) if valid_hr else None
+    computed_avg_speed = round(sum(valid_speed) / len(valid_speed), 3) if valid_speed else None
+    reported_avg_hr = summary.get("averageHR")
+    reported_avg_speed = summary.get("averageSpeed")
+
+    return {
+        "activityId": summary.get("activityId"),
+        "date": summary.get("startTimeLocal"),
+        "name": summary.get("activityName"),
+        "distance_m": summary.get("distance"),
+        "duration_s": summary.get("duration"),
+        "reported_avg_hr": reported_avg_hr,
+        "computed_avg_hr": computed_avg_hr,
+        "hr_difference": round(computed_avg_hr - reported_avg_hr, 1) if computed_avg_hr is not None and reported_avg_hr else None,
+        "reported_avg_speed_m_s": reported_avg_speed,
+        "computed_avg_speed_m_s": computed_avg_speed,
+        "speed_difference_m_s": round(computed_avg_speed - reported_avg_speed, 3) if computed_avg_speed is not None and reported_avg_speed else None,
+        "reported_max_hr": summary.get("maxHR"),
+        "hr_spikes_removed": spikes_removed,
+        "metric_map": metric_map,
+        "clean_hr": clean_hr_stream,
+        "pace_min_mile": paces,
+        "splits": splits.get("lapDTOs", []),
+    }
+
+
 def fetch_data():
     client = restore_session()
 
@@ -113,51 +165,27 @@ def fetch_data():
     except Exception as e:
         print(f"Warning: Could not fetch lap splits: {e}")
 
-    # Map metricDescriptors to activityDetailMetrics array positions
-    descriptors = details.get("metricDescriptors", [])
-    raw_metrics = details.get("activityDetailMetrics", [])
+    latest_evidence = extract_activity_evidence(details, latest_run, splits)
+    historical_evidence = []
+    for activity in activities[:20]:
+        if activity.get("activityId") == activity_id:
+            historical_evidence.append(latest_evidence)
+            continue
+        try:
+            activity_details = client.get_activity_details(activity["activityId"])
+            try:
+                activity_splits = client.get_activity_splits(activity["activityId"])
+            except Exception as split_error:
+                print(f"Warning: Could not fetch splits for {activity.get('activityId')}: {split_error}")
+                activity_splits = {}
+            historical_evidence.append(extract_activity_evidence(activity_details, activity, activity_splits))
+        except Exception as e:
+            print(f"Warning: Could not fetch detail evidence for {activity.get('activityId')}: {e}")
 
-    metric_map = {d["key"]: d["metricsIndex"] for d in descriptors}
-
-    hr_idx = metric_map.get("directHeartRate")
-    speed_idx = metric_map.get("directSpeed")
-
-    hr_stream = []
-    speed_stream = []
-
-    for row in raw_metrics:
-        vals = row.get("metrics", [])
-        hr_val = (
-            vals[hr_idx]
-            if hr_idx is not None and hr_idx < len(vals)
-            else None
-        )
-        speed_val = (
-            vals[speed_idx]
-            if speed_idx is not None and speed_idx < len(vals)
-            else None
-        )
-
-        hr_stream.append(hr_val)
-        speed_stream.append(speed_val)
-
-    clean_hr_stream, threw_out_count = filter_hr_spikes(hr_stream)
-
-    paces_min_mile = []
-    for s in speed_stream:
-        if s and s > 0:
-            pace_val = 26.8224 / s
-            if pace_val < 30.0:
-                paces_min_mile.append(round(pace_val, 2))
-            else:
-                paces_min_mile.append(None)
-        else:
-            paces_min_mile.append(None)
-
-    valid_hrs = [h for h in clean_hr_stream if h is not None]
-    computed_avg_hr = (
-        round(sum(valid_hrs) / len(valid_hrs), 1) if valid_hrs else 0
-    )
+    clean_hr_stream = latest_evidence["clean_hr"]
+    paces_min_mile = latest_evidence["pace_min_mile"]
+    computed_avg_hr = latest_evidence["computed_avg_hr"] or 0
+    threw_out_count = latest_evidence["hr_spikes_removed"]
     reported_avg_hr = latest_run.get("averageHR", 0)
 
     output = {
@@ -177,23 +205,16 @@ def fetch_data():
         "validation": {
             "computed_avg_hr": computed_avg_hr,
             "hr_spikes_removed": threw_out_count,
+            "descriptor_map": latest_evidence["metric_map"],
+            "reported_avg_speed_m_s": latest_evidence["reported_avg_speed_m_s"],
+            "computed_avg_speed_m_s": latest_evidence["computed_avg_speed_m_s"],
+            "hr_difference": latest_evidence["hr_difference"],
+            "speed_difference_m_s": latest_evidence["speed_difference_m_s"],
         },
         "splits": splits.get("lapDTOs", []),
         "per_second_clean_hr": clean_hr_stream,
         "per_second_paces_min_mile": paces_min_mile,
-        "all_historical_runs_summary": [
-            {
-                "activityId": act.get("activityId"),
-                "date": act.get("startTimeLocal"),
-                "name": act.get("activityName"),
-                "distance_m": act.get("distance"),
-                "duration_s": act.get("duration"),
-                "avg_hr": act.get("averageHR"),
-                "max_hr": act.get("maxHR"),
-                "avg_speed_m_s": act.get("averageSpeed"),
-            }
-            for act in activities[:20]
-        ],
+        "all_historical_runs_summary": historical_evidence,
     }
 
     with open("latest_run.json", "w") as f:

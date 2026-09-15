@@ -13,7 +13,7 @@ def restore_session() -> Garmin:
     if not b64_tokens:
         raise ValueError("GARMIN_TOKENS_BASE64 environment secret is missing!")
 
-    # Unpack tar.gz bundle back into home directory (~/.garminconnect)
+    # 1. Unpack tar.gz bundle into home directory (~/.garminconnect)
     compressed_data = base64.b64decode(b64_tokens)
     buf = io.BytesIO(compressed_data)
 
@@ -24,9 +24,9 @@ def restore_session() -> Garmin:
     token_path = os.path.expanduser("~/.garminconnect")
     print(f"Restored session tokens to {token_path}")
 
-    # Resume session using stored tokens without credentials
-    client = Garmin()
-    client.login(token_path)
+    # 2. Pass tokenstore to Garmin client initialization, then call login with no parameters
+    client = Garmin(tokenstore=token_path)
+    client.login()
     return client
 
 

@@ -132,11 +132,36 @@ def extract_activity_evidence(details: dict, summary: dict, splits: dict) -> dic
     }
 
 
+def fetch_wellness_data(client, end_date: datetime, days: int = 90) -> None:
+    """Persist raw daily wellness responses for the recovery dashboard."""
+    records = []
+    for offset in range(days):
+        date_value = (end_date - timedelta(days=offset)).strftime("%Y-%m-%d")
+        record = {"date": date_value}
+        for key, method_name in (
+            ("sleep", "get_sleep_data"),
+            ("hrv", "get_hrv_data"),
+            ("resting_hr", "get_rhr_day"),
+            ("stress", "get_stress_data"),
+        ):
+            try:
+                record[key] = getattr(client, method_name)(date_value)
+            except Exception as error:
+                print(f"Warning: Could not fetch {key} for {date_value}: {error}")
+                record[key] = None
+        records.append(record)
+
+    with open("wellness_data.json", "w") as file:
+        json.dump({"days": records, "days_requested": days}, file, indent=2)
+    print(f"Saved raw wellness data for {len(records)} days.")
+
+
 def fetch_data():
     client = restore_session()
 
     end_date = datetime.now(timezone.utc)
     start_date = end_date - timedelta(days=180)
+    fetch_wellness_data(client, end_date)
 
     print(
         f"Fetching running activities between {start_date.strftime('%Y-%m-%d')} and {end_date.strftime('%Y-%m-%d')}..."

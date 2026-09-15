@@ -1,0 +1,550 @@
+{
+  "latest_sleep": {
+    "date": "2026-09-15",
+    "slept_seconds": 19500,
+    "in_bed_seconds": 20940,
+    "stages": {
+      "Deep": 3000,
+      "Light": 15600,
+      "REM": 900,
+      "Awake": 1440
+    },
+    "reported_stages": {
+      "Deep": 3000,
+      "Light": 15600,
+      "REM": 900,
+      "Awake": 1440
+    },
+    "reconciles": true,
+    "reconcile_difference_seconds": 0,
+    "efficiency": 93.1
+  },
+  "sleep_history": [
+    {
+      "date": "2026-09-15",
+      "slept_seconds": 19500,
+      "in_bed_seconds": 20940,
+      "stages": {
+        "Deep": 3000,
+        "Light": 15600,
+        "REM": 900,
+        "Awake": 1440
+      },
+      "reported_stages": {
+        "Deep": 3000,
+        "Light": 15600,
+        "REM": 900,
+        "Awake": 1440
+      },
+      "reconciles": true,
+      "reconcile_difference_seconds": 0,
+      "efficiency": 93.1
+    },
+    {
+      "date": "2026-09-14",
+      "slept_seconds": 22200,
+      "in_bed_seconds": 28260,
+      "stages": {
+        "Deep": 3780,
+        "Light": 12720,
+        "REM": 5700,
+        "Awake": 6060
+      },
+      "reported_stages": {
+        "Deep": 3780,
+        "Light": 12720,
+        "REM": 5700,
+        "Awake": 6060
+      },
+      "reconciles": true,
+      "reconcile_difference_seconds": 0,
+      "efficiency": 78.6
+    },
+    {
+      "date": "2026-09-13",
+      "slept_seconds": 20100,
+      "in_bed_seconds": 27540,
+      "stages": {
+        "Deep": 4140,
+        "Light": 12540,
+        "REM": 3420,
+        "Awake": 7440
+      },
+      "reported_stages": {
+        "Deep": 4140,
+        "Light": 12540,
+        "REM": 3420,
+        "Awake": 7440
+      },
+      "reconciles": true,
+      "reconcile_difference_seconds": 0,
+      "efficiency": 73.0
+    },
+    {
+      "date": "2026-09-12",
+      "slept_seconds": 14220,
+      "in_bed_seconds": 16680,
+      "stages": {
+        "Deep": 2520,
+        "Light": 10920,
+        "REM": 780,
+        "Awake": 2460
+      },
+      "reported_stages": {
+        "Deep": 2520,
+        "Light": 10920,
+        "REM": 780,
+        "Awake": 2460
+      },
+      "reconciles": true,
+      "reconcile_difference_seconds": 0,
+      "efficiency": 85.3
+    },
+    {
+      "date": "2026-09-11",
+      "slept_seconds": 19140,
+      "in_bed_seconds": 22980,
+      "stages": {
+        "Deep": 4080,
+        "Light": 13620,
+        "REM": 1440,
+        "Awake": 3840
+      },
+      "reported_stages": {
+        "Deep": 4080,
+        "Light": 13620,
+        "REM": 1440,
+        "Awake": 3840
+      },
+      "reconciles": true,
+      "reconcile_difference_seconds": 0,
+      "efficiency": 83.3
+    },
+    {
+      "date": "2026-09-10",
+      "slept_seconds": 15840,
+      "in_bed_seconds": 18840,
+      "stages": {
+        "Deep": 3120,
+        "Light": 8880,
+        "REM": 3840,
+        "Awake": 3000
+      },
+      "reported_stages": {
+        "Deep": 3120,
+        "Light": 8880,
+        "REM": 3840,
+        "Awake": 3000
+      },
+      "reconciles": true,
+      "reconcile_difference_seconds": 0,
+      "efficiency": 84.1
+    },
+    {
+      "date": "2026-09-09",
+      "slept_seconds": 24840,
+      "in_bed_seconds": 29160,
+      "stages": {
+        "Deep": 3840,
+        "Light": 17100,
+        "REM": 3900,
+        "Awake": 4320
+      },
+      "reported_stages": {
+        "Deep": 3840,
+        "Light": 17100,
+        "REM": 3900,
+        "Awake": 4320
+      },
+      "reconciles": true,
+      "reconcile_difference_seconds": 0,
+      "efficiency": 85.2
+    }
+  ],
+  "hrv": {
+    "last": 92,
+    "mean": 82.19,
+    "sd": 7.06,
+    "min": 70,
+    "max": 108,
+    "count": 90
+  },
+  "rhr": {
+    "today": 47.0,
+    "mean_30": 46.47,
+    "sd_30": 1.78,
+    "mean_14": 46.57,
+    "count": 90
+  },
+  "sleep_stats": {
+    "median_seconds": 21720.0,
+    "p75_seconds": 23932,
+    "count": 74
+  },
+  "scores": {
+    "recovery": 64.1,
+    "band": "yellow",
+    "hrv_score": 77.79036827195469,
+    "rhr_score": 44.04494382022471,
+    "sleep_score": 56.8,
+    "weights": {
+      "HRV": 0.5,
+      "RHR": 0.25,
+      "Sleep": 0.25
+    },
+    "strain": 2.8,
+    "target": "9.0-13.5"
+  },
+  "sleep_need": {
+    "baseline_hours": 8.0,
+    "strain_hours": 0.03,
+    "debt_hours": 1.5,
+    "naps_hours": 0.0,
+    "need_hours": 9.53
+  },
+  "activities": [
+    {
+      "date": "2026-09-12",
+      "name": "Chennai - 16K progressive",
+      "load": 48.21,
+      "duration_s": 6752.298828125,
+      "avg_hr": 138.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-09-10",
+      "name": "Chennai - 1.2k Interval",
+      "load": 55.41,
+      "duration_s": 4703.166015625,
+      "avg_hr": 146.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-09-08",
+      "name": "Chennai Running",
+      "load": 38.19,
+      "duration_s": 4804.509765625,
+      "avg_hr": 133.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-09-05",
+      "name": "Chennai Running",
+      "load": 42.53,
+      "duration_s": 6546.56005859375,
+      "avg_hr": 135.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-09-04",
+      "name": "Chennai - 800 Interval",
+      "load": 64.71,
+      "duration_s": 3657.06298828125,
+      "avg_hr": 147.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-09-02",
+      "name": "10k",
+      "load": 54.6,
+      "duration_s": 4023.64697265625,
+      "avg_hr": 153.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-08-30",
+      "name": "Hyderabad Running",
+      "load": 65.01,
+      "duration_s": 8784.984375,
+      "avg_hr": 150.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-08-23",
+      "name": "Chennai Running",
+      "load": 19.26,
+      "duration_s": 3568.60205078125,
+      "avg_hr": 104.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-08-08",
+      "name": "Chennai Running",
+      "load": 61.32,
+      "duration_s": 4901.9638671875,
+      "avg_hr": 150.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-07-26",
+      "name": "Chennai Running",
+      "load": 79.61,
+      "duration_s": 8807.7939453125,
+      "avg_hr": 158.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-07-19",
+      "name": "Chennai Running",
+      "load": 36.8,
+      "duration_s": 1775.115966796875,
+      "avg_hr": 125.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-07-14",
+      "name": "2K WU - 3K Tempo - 2K CD",
+      "load": 47.7,
+      "duration_s": 2840.39990234375,
+      "avg_hr": 144.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-07-12",
+      "name": "Trail Running",
+      "load": 8.17,
+      "duration_s": 732.72802734375,
+      "avg_hr": 102.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-07-11",
+      "name": "Chennai Running",
+      "load": 46.33,
+      "duration_s": 6253.82177734375,
+      "avg_hr": 139.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-07-08",
+      "name": "Flyover repeats ",
+      "load": 28.06,
+      "duration_s": 2297.450927734375,
+      "avg_hr": 131.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-07-02",
+      "name": "W2 - R2 - EZ Run",
+      "load": 36.34,
+      "duration_s": 2815.998046875,
+      "avg_hr": 135.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-06-30",
+      "name": "Week 2 - EZ Run",
+      "load": 43.44,
+      "duration_s": 3197.51904296875,
+      "avg_hr": 137.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-06-28",
+      "name": "EZ Run",
+      "load": 33.46,
+      "duration_s": 3248.18310546875,
+      "avg_hr": 126.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-06-25",
+      "name": "Running",
+      "load": 18.07,
+      "duration_s": 672.5789794921875,
+      "avg_hr": 133.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-05-30",
+      "name": "Chennai Running",
+      "load": 28.28,
+      "duration_s": 2365.134033203125,
+      "avg_hr": 131.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-05-27",
+      "name": "Chennai Running",
+      "load": 35.54,
+      "duration_s": 2614.429931640625,
+      "avg_hr": 137.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-05-24",
+      "name": "Chennai Running",
+      "load": 10.65,
+      "duration_s": 514.1909790039062,
+      "avg_hr": 125.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-05-24",
+      "name": "Chennai Running",
+      "load": 8.03,
+      "duration_s": 369.8909912109375,
+      "avg_hr": 124.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-04-26",
+      "name": "Bengaluru - TCS World 10K Bengaluru (10K Run)",
+      "load": 91.27,
+      "duration_s": 3390.85009765625,
+      "avg_hr": 166.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-04-23",
+      "name": "Chennai Running",
+      "load": 35.12,
+      "duration_s": 2595.550048828125,
+      "avg_hr": 137.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-04-18",
+      "name": "Chennai Running",
+      "load": 39.37,
+      "duration_s": 4602.0859375,
+      "avg_hr": 135.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-04-15",
+      "name": "Chennai - Threshold Run",
+      "load": 60.8,
+      "duration_s": 3866.2041015625,
+      "avg_hr": 141.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-04-09",
+      "name": "Chennai - Interval Run",
+      "load": 60.54,
+      "duration_s": 3131.673095703125,
+      "avg_hr": 150.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-04-07",
+      "name": "VV Pinned Run",
+      "load": 50.74,
+      "duration_s": 3470.330078125,
+      "avg_hr": 139.0,
+      "has_hr": true
+    },
+    {
+      "date": "2026-03-28",
+      "name": "Chennai Running",
+      "load": 35.15,
+      "duration_s": 600.4199829101562,
+      "avg_hr": 165.0,
+      "has_hr": true
+    }
+  ],
+  "strain_history": [
+    {
+      "date": "2026-09-12",
+      "strain": 16.5
+    },
+    {
+      "date": "2026-09-10",
+      "strain": 17.5
+    },
+    {
+      "date": "2026-09-08",
+      "strain": 14.8
+    },
+    {
+      "date": "2026-09-05",
+      "strain": 15.5
+    },
+    {
+      "date": "2026-09-04",
+      "strain": 18.7
+    },
+    {
+      "date": "2026-09-02",
+      "strain": 17.4
+    },
+    {
+      "date": "2026-08-30",
+      "strain": 18.7
+    }
+  ],
+  "quality": {
+    "stage_checks": [
+      {
+        "date": "2026-09-15",
+        "slept_seconds": 19500,
+        "in_bed_seconds": 20940,
+        "stages": {
+          "Deep": 3000,
+          "Light": 15600,
+          "REM": 900,
+          "Awake": 1440
+        },
+        "reported_stages": {
+          "Deep": 3000,
+          "Light": 15600,
+          "REM": 900,
+          "Awake": 1440
+        },
+        "reconciles": true,
+        "reconcile_difference_seconds": 0,
+        "efficiency": 93.1
+      },
+      {
+        "date": "2026-09-14",
+        "slept_seconds": 22200,
+        "in_bed_seconds": 28260,
+        "stages": {
+          "Deep": 3780,
+          "Light": 12720,
+          "REM": 5700,
+          "Awake": 6060
+        },
+        "reported_stages": {
+          "Deep": 3780,
+          "Light": 12720,
+          "REM": 5700,
+          "Awake": 6060
+        },
+        "reconciles": true,
+        "reconcile_difference_seconds": 0,
+        "efficiency": 78.6
+      },
+      {
+        "date": "2026-09-13",
+        "slept_seconds": 20100,
+        "in_bed_seconds": 27540,
+        "stages": {
+          "Deep": 4140,
+          "Light": 12540,
+          "REM": 3420,
+          "Awake": 7440
+        },
+        "reported_stages": {
+          "Deep": 4140,
+          "Light": 12540,
+          "REM": 3420,
+          "Awake": 7440
+        },
+        "reconciles": true,
+        "reconcile_difference_seconds": 0,
+        "efficiency": 73.0
+      }
+    ],
+    "deep_percent_range": [
+      0.0,
+      38.0
+    ],
+    "rem_percent_range": [
+      0.0,
+      31.1
+    ],
+    "missing_hr_activities": []
+  }
+}

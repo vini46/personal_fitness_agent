@@ -7,7 +7,7 @@ import time
 from openai import OpenAI, RateLimitError
 
 
-DEFAULT_MODEL = "google/gemma-4-31b-it:free"
+DEFAULT_MODEL = "llama-3.1-8b-instant"
 
 
 def format_pace(pace):
@@ -152,6 +152,36 @@ def derive_training_evidence(run_data):
     }
 
 
+def local_insights(run_data):
+    """Produce useful evidence-based copy when the model is unavailable."""
+    summary = run_data["summary"]
+    evidence = run_data["derived_evidence"]
+    hr = [value for value in run_data.get("per_second_clean_hr", []) if value is not None]
+    pace = [value for value in run_data.get("per_second_paces_min_km", []) if value is not None]
+    average_hr = summary.get("reported_avg_hr") or run_data["validation"].get("computed_avg_hr")
+    average_pace = pace_from_speed(summary.get("reported_avg_speed_m_s"))
+    threshold = evidence.get("threshold") or {}
+    threshold_hr = threshold.get("heart_rate")
+    if threshold_hr and average_hr and average_hr >= threshold_hr * 0.95:
+        effort = "quality"
+    elif threshold_hr and average_hr and average_hr >= threshold_hr * 0.85:
+        effort = "steady"
+    else:
+        effort = "easy or aerobic"
+    return {
+        "headline": f"{summary.get('name') or 'Latest activity'} evidence read",
+        "effort_summary": f"This {summary.get('distance_km', 0):.2f} km activity reads as {effort}. Average HR was {average_hr or '-'} bpm and average pace was {format_pace(average_pace)}. The cleaned stream contains {len(hr)} HR samples.",
+        "pacing_insight": f"Recorded pace spans {format_pace(min(pace)) if pace else '-'} to {format_pace(max(pace)) if pace else '-'}. Use the chart and splits to judge whether the effort accelerated, faded, or stayed even.",
+        "heart_rate_insight": f"Clean HR range was {min(hr) if hr else '-'}-{max(hr) if hr else '-'} bpm, with {run_data['validation'].get('hr_spikes_removed', 0)} isolated spikes corrected. The historical set contains {len(run_data.get('all_historical_runs_summary', []))} activities.",
+        "threshold_assessment": f"Threshold candidate: {threshold_hr or '-'} bpm at {format_pace(threshold.get('pace_min_km'))}. Basis: {threshold.get('basis', 'insufficient detailed effort evidence')}. Check it against a sustained hard effort.",
+        "training_zones": f"The latest activity has {len(evidence.get('zones', []))} locally derived HR zones calculated from cleaned per-second data. Percentages are shown in the zone table; they are estimates, not app-defined zones.",
+        "zone_comparison": "No external app zone model was provided, so this report compares the activity against your derived evidence rather than inventing another zone system.",
+        "next_run": f"Use the current HR response as the next comparison point. Keep an easy run comfortably below the threshold candidate of {threshold_hr or '-'} bpm if recovery is uncertain.",
+        "confidence": f"High for recorded metrics. Moderate for interpretation; {len(evidence.get('validation_failures', []))} historical validation warnings were detected.",
+        "caveats": "Heat, terrain, fatigue, sensor fit, and negative-split context are not fully available in Garmin summary data. Threshold and zone estimates improve with more verified quality efforts.",
+    }
+
+
 def request_insights(client, model, run_data):
     summary = run_data["summary"]
     validation = run_data["validation"]
@@ -197,7 +227,6 @@ zones were identified unless supplied.
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
-                extra_body={"provider": {"allow_fallbacks": True}},
             )
             result = clean_json_response(response.choices[0].message.content)
             fields = [
@@ -205,13 +234,14 @@ zones were identified unless supplied.
                 "threshold_assessment", "training_zones", "zone_comparison", "next_run",
                 "confidence", "caveats",
             ]
-            return {field: str(result.get(field, "Not enough evidence.")) for field in fields}
+            fallback = local_insights(run_data)
+            return {field: str(result.get(field) or fallback[field]) for field in fields}
         except RateLimitError as error:
             if attempt == 2:
-                print("OpenRouter rate limit persisted; using local evidence summary.")
+                print("Groq rate limit persisted; using local evidence summary.")
                 break
             delay_seconds = 5 * (2**attempt)
-            print(f"OpenRouter rate limit; retrying in {delay_seconds} seconds...")
+            print(f"Groq rate limit; retrying in {delay_seconds} seconds...")
             time.sleep(delay_seconds)
         except (ValueError, TypeError, KeyError) as error:
             print(f"Could not parse structured model response: {error}")
@@ -220,18 +250,7 @@ zones were identified unless supplied.
             print(f"Could not obtain structured coaching insights: {error}")
             break
 
-    summary = run_data["summary"]
-    return {
-        "headline": f"{summary.get('name') or 'Latest run'}: evidence dashboard",
-        "effort_summary": "The charts below show the recorded effort. A model-generated coaching summary was unavailable.",
-        "pacing_insight": "Use the pace chart and split table to judge consistency across the run.",
-        "heart_rate_insight": "Heart-rate values shown here use the cleaned per-second stream.",
-        "threshold_assessment": "A single run is not enough evidence to establish threshold heart rate or threshold pace.",
-        "training_zones": "The bars are provisional observed HR bands, not validated training zones.",
-        "next_run": "Keep the next run easy enough to compare pace and heart rate with this effort.",
-        "confidence": "Data visualization: high. Coaching interpretation: limited.",
-        "caveats": "Threshold and training-zone conclusions need multiple comparable efforts, temperature, terrain, and verified effort context.",
-    }
+    return local_insights(run_data)
 
 
 def build_dashboard(run_data, insights):
@@ -303,7 +322,7 @@ main{{max-width:1160px;margin:auto;padding:32px 20px 70px}}header{{display:flex;
 @media(max-width:700px){{main{{padding:20px 12px 40px}}header{{display:block}}.metrics{{grid-template-columns:repeat(2,1fr)}}.layout{{display:block}}.insights{{grid-template-columns:1fr}}.evidence-grid{{grid-template-columns:repeat(2,1fr)}}.panel{{padding:15px}}.section-heading{{align-items:start}}}}
 </style></head><body><main><header><div><div class="eyebrow">Evidence-led run analysis</div><h1>{title}</h1><div class="date">{html.escape(str(summary.get('date') or 'Date unavailable'))}</div></div><div><a class="back" href="index.html">Home</a><div class="muted">{validation.get('hr_spikes_removed', 0)} HR spikes removed</div></div></header>
 <nav class="jump-nav" aria-label="Report sections"><a href="#latest">Latest run</a><a href="#coach">Coach read</a><a href="#zones">Zone evidence</a><a href="#history">Activity history</a><a href="#splits">Splits</a></nav><section id="latest" class="metrics">{card_html}</section><div class="layout"><section class="panel chart-panel"><div class="section-heading"><div><div class="eyebrow">Interactive chart</div><h2>Per-second effort</h2><p class="muted">Move across the chart for a second-by-second reading.</p></div><div class="chart-controls"><button type="button" class="chart-toggle active" data-series="hr">HR</button><button type="button" class="chart-toggle active" data-series="pace">Pace</button></div></div><canvas id="chart" aria-label="Interactive heart rate and pace chart"></canvas><div class="legend"><span><i class="dot"></i>Heart rate</span><span><i class="dot teal"></i>Pace</span><span id="hover" class="muted">Hover the chart for a reading</span></div></section>
-<section id="coach" class="panel"><h2>Coach read</h2><div class="insights">{insight_html}</div><p class="note"><strong>Confidence:</strong> {html.escape(insights['confidence'])}<br><strong>Limits:</strong> {html.escape(insights['caveats'])}</p></section>
+<section id="coach" class="panel"><div class="section-heading"><div><div class="eyebrow">Interpretation</div><h2>Coach read</h2><p class="muted">{html.escape(insights.get('headline', 'Evidence-based activity interpretation'))}</p></div></div><div class="insights">{insight_html}</div><p class="note"><strong>Confidence:</strong> {html.escape(insights['confidence'])}<br><strong>Limits:</strong> {html.escape(insights['caveats'])}</p></section>
 <section class="panel"><h2>Heart-rate distribution</h2><p class="muted">Provisional observed bands from the cleaned stream, not validated physiological zones.</p>{bands_html}</section><section id="zones" class="panel"><h2>Evidence behind the zones</h2>{evidence_html}<table><thead><tr><th>Zone</th><th>HR range</th><th>Time</th><th>Share</th></tr></thead><tbody>{zone_html}</tbody></table><p class="note">Derived from cleaned per-second data. These are evidence-based estimates, not medical guidance. App-specific zones require the app's configured basis.</p></section><section id="history" class="panel wide"><div class="section-heading"><div><div class="eyebrow">History</div><h2>All analyzed activities</h2><p class="muted">Every running activity with returned detail evidence. Pace is minutes per kilometer.</p></div><span class="count">{len(run_data.get("all_historical_runs_summary", []))} runs</span></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Activity</th><th>Distance km</th><th>Avg pace</th><th>Avg HR</th><th>Max HR</th><th>Time</th><th>Effort</th><th>Spikes</th></tr></thead><tbody>{history_rows}</tbody></table></div></section><section id="splits" class="panel wide"><div class="section-heading"><div><div class="eyebrow">Latest activity</div><h2>Splits and laps</h2></div><span class="count">{len(split_rows)} laps</span></div><div class="table-wrap"><table><thead><tr><th>Type</th><th>Value</th><th>Avg speed km/h</th><th>Avg HR</th><th>Elevation gain m</th></tr></thead><tbody>{split_html}</tbody></table></div></section></div></main>
 <script>const data={json.dumps(chart_data,separators=(',', ':'))};const canvas=document.getElementById('chart'),ctx=canvas.getContext('2d'),hover=document.getElementById('hover'),visible={{hr:true,pace:true}};function draw(){{const d=devicePixelRatio||1,w=canvas.clientWidth,h=canvas.clientHeight;canvas.width=w*d;canvas.height=h*d;ctx.scale(d,d);ctx.clearRect(0,0,w,h);const series=[['hr','#e85d3f',data.hr],['pace','#117c78',data.pace]],all=series.flatMap(x=>x[2].filter(v=>v!=null));if(!all.length)return;const min=Math.min(...all),max=Math.max(...all);series.forEach(([name,color,values])=>{{if(!visible[name])return;ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;values.forEach((v,i)=>{{if(v==null)return;const x=i/(values.length-1)*w,y=h-(v-min)/(max-min||1)*(h-20)-10;i?ctx.lineTo(x,y):ctx.moveTo(x,y)}});ctx.stroke()}});canvas.onmousemove=e=>{{const i=Math.min(data.hr.length-1,Math.max(0,Math.round((e.offsetX/w)*(data.hr.length-1))));hover.textContent=`${{i}}s · HR ${{data.hr[i]??'-'}} bpm · Pace ${{data.pace[i]??'-'}} min/km`}}}};document.querySelectorAll('.chart-toggle').forEach(button=>button.onclick=()=>{{const name=button.dataset.series;visible[name]=!visible[name];button.classList.toggle('active',visible[name]);draw()}});const search=document.getElementById('activity-search');if(search)search.oninput=event=>{{const query=event.target.value.toLowerCase();document.querySelectorAll('#activity-table tbody tr').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(query))}};addEventListener('resize',draw);draw();</script></body></html>'''
 
@@ -311,16 +330,16 @@ main{{max-width:1160px;margin:auto;padding:32px 20px 70px}}header{{display:flex;
 def main():
     with open("latest_run.json", "r") as file:
         run_data = json.load(file)
-    key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    key = os.environ.get("GROQ_API_KEY", "").strip()
     if not key:
-        raise RuntimeError("OPENROUTER_API_KEY is not set.")
+        raise RuntimeError("GROQ_API_KEY is not set.")
     run_data["derived_evidence"] = derive_training_evidence(run_data)
     client = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
+        base_url="https://api.groq.com/openai/v1",
         api_key=key,
         default_headers={"Authorization": f"Bearer {key}"},
     )
-    model = os.environ.get("OPENROUTER_MODEL", "").strip() or DEFAULT_MODEL
+    model = os.environ.get("GROQ_MODEL", "").strip() or DEFAULT_MODEL
     insights = request_insights(client, model, run_data)
     with open("run-analysis.html", "w") as file:
         file.write(build_dashboard(run_data, insights))

@@ -7,7 +7,8 @@ import time
 from openai import OpenAI, RateLimitError
 
 
-DEFAULT_MODEL = "llama-3.1-8b-instant"
+DEFAULT_MODEL = "llama-3.3-70b-versatile"
+MAX_PROMPT_CHARS = 18000
 
 
 def format_pace(pace):
@@ -183,8 +184,22 @@ def local_insights(run_data):
 
 
 def request_insights(client, model, run_data):
-    summary = run_data["summary"]
-    validation = run_data["validation"]
+    summary_source = run_data["summary"]
+    summary = {
+        key: summary_source.get(key)
+        for key in (
+            "activityId", "name", "date", "distance_km", "duration_seconds",
+            "reported_avg_hr", "reported_max_hr", "reported_avg_speed_m_s",
+        )
+    }
+    validation_source = run_data["validation"]
+    validation = {
+        key: validation_source.get(key)
+        for key in (
+            "computed_avg_hr", "hr_spikes_removed", "hr_difference",
+            "computed_avg_speed_m_s", "speed_difference_m_s",
+        )
+    }
     historical = [
         {
             key: run.get(key)
@@ -194,11 +209,26 @@ def request_insights(client, model, run_data):
                 "reported_avg_speed_m_s", "hr_spikes_removed",
             )
         }
-        for run in run_data.get("all_historical_runs_summary", [])
+        for run in run_data.get("all_historical_runs_summary", [])[:12]
     ]
     clean_hr = [value for value in run_data.get("per_second_clean_hr", []) if value is not None]
     pace = [value for value in run_data.get("per_second_paces_min_km", []) if value is not None]
-    evidence = run_data["derived_evidence"]
+    raw_evidence = run_data["derived_evidence"]
+    evidence = {
+        "runs_with_detail": raw_evidence.get("runs_with_detail"),
+        "max_hr": raw_evidence.get("max_hr"),
+        "threshold": raw_evidence.get("threshold"),
+        "zones": raw_evidence.get("zones"),
+        "activity_trends": raw_evidence.get("activity_trends", [])[:12],
+        "validation_warning_count": len(raw_evidence.get("validation_failures", [])),
+    }
+    compact_splits = [
+        {
+            key: split.get(key)
+            for key in ("splitType", "splitTypeValue", "averageSpeed", "averageHR", "elevationGain")
+        }
+        for split in run_data.get("splits", [])[:20]
+    ]
     prompt = f"""
 You are a careful running coach. Analyze this Garmin run using only the supplied data.
 Return ONLY valid JSON with exactly these string fields:
@@ -213,14 +243,19 @@ Validation: {json.dumps(validation)}
 Clean HR range: {min(clean_hr) if clean_hr else None}-{max(clean_hr) if clean_hr else None},
 clean HR average: {round(statistics.mean(clean_hr), 1) if clean_hr else None}
 Pace range: {min(pace) if pace else None}-{max(pace) if pace else None} min/km
-All historical running activities: {json.dumps(historical)}
-Splits: {json.dumps(run_data.get("splits", [])[:30])}
+Historical activity summaries (first 12): {json.dumps(historical, separators=(',', ':'))}
+Latest splits (first 20): {json.dumps(compact_splits, separators=(',', ':'))}
 Derived evidence computed locally (do not override it): {json.dumps(evidence)}
 Explain max HR activity/date, threshold evidence, cross-activity trends, and
 heat/negative-split limitations if data is unavailable. Never claim a paid app's
 zones were identified unless supplied.
 """
 
+    if len(prompt) > MAX_PROMPT_CHARS:
+        print(f"Groq prompt was {len(prompt)} characters; using local evidence summary.")
+        return local_insights(run_data)
+
+    print(f"Groq coaching prompt: {len(prompt)} characters")
     for attempt in range(3):
         try:
             response = client.chat.completions.create(
@@ -247,6 +282,13 @@ zones were identified unless supplied.
             print(f"Could not parse structured model response: {error}")
             break
         except Exception as error:
+            if "413" in str(error) or "tokens" in str(error):
+                print("Groq rejected the prompt size; using local evidence summary.")
+                break
+            if "model_not_found" in str(error) and model != DEFAULT_MODEL:
+                print(f"Groq model {model} is unavailable; retrying with {DEFAULT_MODEL}.")
+                model = DEFAULT_MODEL
+                continue
             print(f"Could not obtain structured coaching insights: {error}")
             break
 

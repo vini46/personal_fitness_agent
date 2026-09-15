@@ -192,7 +192,7 @@
       "RHR": 0.25,
       "Sleep": 0.25
     },
-    "strain": 2.8,
+    "strain": 8.0,
     "target": "9.0-13.5"
   },
   "sleep_need": {
@@ -203,6 +203,14 @@
     "need_hours": 9.63
   },
   "activities": [
+    {
+      "date": "2026-09-15",
+      "name": "Strength",
+      "load": 11.07,
+      "duration_s": 2834.219970703125,
+      "avg_hr": 103.0,
+      "has_hr": true
+    },
     {
       "date": "2026-09-14",
       "name": "Strength",
@@ -434,17 +442,13 @@
       "duration_s": 2496.699951171875,
       "avg_hr": 110.0,
       "has_hr": true
-    },
-    {
-      "date": "2026-08-21",
-      "name": "Dance Fitness",
-      "load": 25.32,
-      "duration_s": 2913.98291015625,
-      "avg_hr": 137.0,
-      "has_hr": true
     }
   ],
   "strain_history": [
+    {
+      "date": "2026-09-15",
+      "strain": 8.0
+    },
     {
       "date": "2026-09-14",
       "strain": 8.3
@@ -468,10 +472,6 @@
     {
       "date": "2026-09-08",
       "strain": 14.7
-    },
-    {
-      "date": "2026-09-07",
-      "strain": 8.5
     }
   ],
   "quality": {

@@ -2,36 +2,46 @@ import base64
 import io
 import json
 import os
-import tarfile
+import shutil
+import tempfile
 from datetime import datetime, timedelta, timezone
-from garminconnect import Garmin, GarminConnectAuthenticationError
+from garminconnect import Garmin
 
 
-def restore_session():
-    email = os.environ.get("GARMIN_EMAIL")
-    password = os.environ.get("GARMIN_PASSWORD")
-    token_path = "/home/runner/.garminconnect" # Or your token directory path
+def restore_session() -> Garmin:
+    """Restores session using the exact logic from your working agent."""
+    b64_tokens = os.environ.get("GARMIN_TOKENS_BASE64")
+    if not b64_tokens:
+        raise ValueError("GARMIN_TOKENS_BASE64 environment secret is missing!")
 
-    # Initialize Garmin client with credentials
-    client = Garmin(email, password)
+    # Unpack base64 tar.gz
+    compressed_data = base64.b64decode(b64_tokens)
+    buf = io.BytesIO(compressed_data)
 
+    tmp_dir = tempfile.mkdtemp()
     try:
-        # Pass credentials alongside token_path to allow seamless re-auth if tokens expire
-        client.login(tokenbase=token_path)
-    except Exception as e:
-        # Fallback to standard login if token restoration fails
-        client.login()
-        # Save refreshed tokens for subsequent runs
-        client.garth.dump(token_path)
+        with tarfile.open(fileobj=buf, mode="r:gz") as tar:
+            tar.extractall(path=tmp_dir)
 
-    return client
+        # Handle nested directory structure if token files are inside .garminconnect
+        session_path = tmp_dir
+        if os.path.exists(os.path.join(tmp_dir, ".garminconnect")):
+            session_path = os.path.join(tmp_dir, ".garminconnect")
+
+        print(f"Restoring Garmin session from: {session_path}")
+
+        # Replicate your previous agent's working restore logic
+        api = Garmin()
+        api.login(session_path)
+        print("Successfully authenticated with Garmin!")
+        return api
+    except Exception as e:
+        print(f"Garmin restore error: {e}")
+        raise e
 
 
 def filter_hr_spikes(hr_stream: list, threshold: int = 15) -> tuple[list, int]:
-    """Filters single-sample optical wrist heart rate artifacts.
-
-    Drops samples that jump more than threshold (15 bpm) from their immediate neighbours.
-    """
+    """Filters single-sample optical wrist heart rate artifacts."""
     if not hr_stream:
         return [], 0
 
@@ -44,11 +54,9 @@ def filter_hr_spikes(hr_stream: list, threshold: int = 15) -> tuple[list, int]:
         next_val = cleaned[i + 1]
 
         if prev_val is not None and curr_val is not None and next_val is not None:
-            # Check if current sample is an isolated spike above both neighbors
             if (curr_val - prev_val > threshold) and (
                 curr_val - next_val > threshold
             ):
-                # Interpolate using surrounding samples
                 cleaned[i] = round((prev_val + next_val) / 2)
                 threw_out += 1
 
@@ -58,7 +66,6 @@ def filter_hr_spikes(hr_stream: list, threshold: int = 15) -> tuple[list, int]:
 def fetch_data():
     client = restore_session()
 
-    # 1. Pull activities from last 180 days
     end_date = datetime.now(timezone.utc)
     start_date = end_date - timedelta(days=180)
 
@@ -72,31 +79,25 @@ def fetch_data():
     )
 
     if not activities:
-        raise RuntimeError(
-            "No running activities found in the last 180 days."
-        )
+        raise RuntimeError("No running activities found in last 180 days.")
 
     print(f"Found {len(activities)} running activities.")
 
-    # Select the most recent quality run
     latest_run = activities[0]
     activity_id = latest_run["activityId"]
     print(
         f"Processing Activity ID: {activity_id} ({latest_run.get('activityName')})"
     )
 
-    # Fetch detailed per-second metrics stream and lap/split breakdowns
     details = client.get_activity_details(activity_id)
 
     splits = {}
     try:
         splits = client.get_activity_splits(activity_id)
     except Exception as e:
-        print(
-            f"Warning: Could not fetch split details: {e}. Falling back to activity summary."
-        )
+        print(f"Warning: Could not fetch lap splits: {e}")
 
-    # Step 3 Check: Map metricDescriptors to activityDetailMetrics array positions
+    # Map metricDescriptors to activityDetailMetrics array positions
     descriptors = details.get("metricDescriptors", [])
     raw_metrics = details.get("activityDetailMetrics", [])
 
@@ -104,7 +105,6 @@ def fetch_data():
 
     hr_idx = metric_map.get("directHeartRate")
     speed_idx = metric_map.get("directSpeed")
-    timestamp_idx = metric_map.get("directTimestamp")
 
     hr_stream = []
     speed_stream = []
@@ -125,36 +125,25 @@ def fetch_data():
         hr_stream.append(hr_val)
         speed_stream.append(speed_val)
 
-    # Step 4: Filter HR Spikes
     clean_hr_stream, threw_out_count = filter_hr_spikes(hr_stream)
 
-    # Step 4: Convert speed (m/s) to pace (minutes per mile)
-    # Pace (min/mi) = 26.8224 / speed_in_m_per_s
     paces_min_mile = []
     for s in speed_stream:
         if s and s > 0:
             pace_val = 26.8224 / s
-            # Cap unrealistic values (e.g., standing still or GPS jitter)
-            if pace_val < 30.0:  # 30:00 min/mile max
+            if pace_val < 30.0:
                 paces_min_mile.append(round(pace_val, 2))
             else:
                 paces_min_mile.append(None)
         else:
             paces_min_mile.append(None)
 
-    # Validation step: Compare clean average HR with activity summary average
     valid_hrs = [h for h in clean_hr_stream if h is not None]
     computed_avg_hr = (
         round(sum(valid_hrs) / len(valid_hrs), 1) if valid_hrs else 0
     )
     reported_avg_hr = latest_run.get("averageHR", 0)
 
-    print(f"Validation Check:")
-    print(f" - Computed Stream Avg HR: {computed_avg_hr} bpm")
-    print(f" - Reported Activity Avg HR: {reported_avg_hr} bpm")
-    print(f" - Optical HR Spikes Removed: {threw_out_count}")
-
-    # Build final output structure for OpenRouter agent
     output = {
         "summary": {
             "activityId": activity_id,
@@ -187,14 +176,14 @@ def fetch_data():
                 "max_hr": act.get("maxHR"),
                 "avg_speed_m_s": act.get("averageSpeed"),
             }
-            for act in activities[:20]  # Pass summary of recent 20 runs for zone derivation
+            for act in activities[:20]
         ],
     }
 
     with open("latest_run.json", "w") as f:
         json.dump(output, f, indent=2)
 
-    print("Successfully created latest_run.json")
+    print("Successfully generated latest_run.json")
 
 
 if __name__ == "__main__":

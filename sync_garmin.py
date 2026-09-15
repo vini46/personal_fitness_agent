@@ -10,12 +10,11 @@ from garminconnect import Garmin
 
 
 def restore_session() -> Garmin:
-    """Restores session using the exact logic from your working agent."""
+    """Restores session using stored base64-encoded session archive."""
     b64_tokens = os.environ.get("GARMIN_TOKENS_BASE64")
     if not b64_tokens:
         raise ValueError("GARMIN_TOKENS_BASE64 environment secret is missing!")
 
-    # Unpack base64 tar.gz
     compressed_data = base64.b64decode(b64_tokens)
     buf = io.BytesIO(compressed_data)
 
@@ -24,16 +23,15 @@ def restore_session() -> Garmin:
         with tarfile.open(fileobj=buf, mode="r:gz") as tar:
             tar.extractall(path=tmp_dir)
 
-        # Handle nested directory structure if token files are inside .garminconnect
         session_path = tmp_dir
         if os.path.exists(os.path.join(tmp_dir, ".garminconnect")):
             session_path = os.path.join(tmp_dir, ".garminconnect")
 
         print(f"Restoring Garmin session from: {session_path}")
 
-        # Replicate your previous agent's working restore logic
         api = Garmin()
-        api.login(session_path)
+        # Use token_store keyword argument instead of positional argument
+        api.login(token_store=session_path)
         print("Successfully authenticated with Garmin!")
         return api
     except Exception as e:

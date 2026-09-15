@@ -4,29 +4,26 @@ import json
 import os
 import tarfile
 from datetime import datetime, timedelta, timezone
-from garminconnect import Garmin
+from garminconnect import Garmin, GarminConnectAuthenticationError
 
 
-def restore_session() -> Garmin:
-    """Restores the Garmin session using the GARMIN_TOKENS_BASE64 env secret."""
-    b64_tokens = os.environ.get("GARMIN_TOKENS_BASE64")
-    if not b64_tokens:
-        raise ValueError("GARMIN_TOKENS_BASE64 environment secret is missing!")
+def restore_session():
+    email = os.environ.get("GARMIN_EMAIL")
+    password = os.environ.get("GARMIN_PASSWORD")
+    token_path = "/home/runner/.garminconnect" # Or your token directory path
 
-    # 1. Unpack tar.gz bundle into home directory (~/.garminconnect)
-    compressed_data = base64.b64decode(b64_tokens)
-    buf = io.BytesIO(compressed_data)
+    # Initialize Garmin client with credentials
+    client = Garmin(email, password)
 
-    home_dir = os.path.expanduser("~")
-    with tarfile.open(fileobj=buf, mode="r:gz") as tar:
-        tar.extractall(path=home_dir)
+    try:
+        # Pass credentials alongside token_path to allow seamless re-auth if tokens expire
+        client.login(tokenbase=token_path)
+    except Exception as e:
+        # Fallback to standard login if token restoration fails
+        client.login()
+        # Save refreshed tokens for subsequent runs
+        client.garth.dump(token_path)
 
-    token_path = os.path.expanduser("~/.garminconnect")
-    print(f"Restored session tokens to {token_path}")
-
-    # 2. Instantiate Garmin with no args, then pass token path to login()
-    client = Garmin()
-    client.login(token_path)
     return client
 
 

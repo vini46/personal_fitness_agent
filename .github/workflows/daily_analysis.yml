@@ -25,7 +25,8 @@ jobs:
 
       - name: Fetch and Clean Garmin Data
         env:
-          GARMIN_TOKENS_BASE64: ${{ secrets.GARMIN_TOKENS_BASE64 }}
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
         run: python sync_garmin.py
 
       - name: Run OpenRouter Analysis Agent

@@ -2,7 +2,7 @@ name: Daily Garmin Run Analysis Pipeline
 
 on:
   schedule:
-    - cron: '0 4 * * *'  # Runs daily at 4:00 AM UTC
+    - cron: '7 4 * * *'  # Runs daily at 4:00 AM UTC
   workflow_dispatch:     # Allows manual on-demand execution
 
 permissions:

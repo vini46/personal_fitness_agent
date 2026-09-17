@@ -1,25 +1,45 @@
 {
   "latest_sleep": {
-    "date": "2026-09-16",
-    "slept_seconds": 18720,
-    "in_bed_seconds": 23400,
+    "date": "2026-09-17",
+    "slept_seconds": 19380,
+    "in_bed_seconds": 20220,
     "stages": {
-      "Deep": 4020,
-      "Light": 11340,
+      "Deep": 3540,
+      "Light": 12480,
       "REM": 3360,
-      "Awake": 4680
+      "Awake": 840
     },
     "reported_stages": {
-      "Deep": 4020,
-      "Light": 11340,
+      "Deep": 3540,
+      "Light": 12480,
       "REM": 3360,
-      "Awake": 4680
+      "Awake": 840
     },
     "reconciles": true,
     "reconcile_difference_seconds": 0,
-    "efficiency": 80.0
+    "efficiency": 95.8
   },
   "sleep_history": [
+    {
+      "date": "2026-09-17",
+      "slept_seconds": 19380,
+      "in_bed_seconds": 20220,
+      "stages": {
+        "Deep": 3540,
+        "Light": 12480,
+        "REM": 3360,
+        "Awake": 840
+      },
+      "reported_stages": {
+        "Deep": 3540,
+        "Light": 12480,
+        "REM": 3360,
+        "Awake": 840
+      },
+      "reconciles": true,
+      "reconcile_difference_seconds": 0,
+      "efficiency": 95.8
+    },
     {
       "date": "2026-09-16",
       "slept_seconds": 18720,
@@ -139,30 +159,10 @@
       "reconciles": true,
       "reconcile_difference_seconds": 0,
       "efficiency": 83.3
-    },
-    {
-      "date": "2026-09-10",
-      "slept_seconds": 15840,
-      "in_bed_seconds": 18840,
-      "stages": {
-        "Deep": 3120,
-        "Light": 8880,
-        "REM": 3840,
-        "Awake": 3000
-      },
-      "reported_stages": {
-        "Deep": 3120,
-        "Light": 8880,
-        "REM": 3840,
-        "Awake": 3000
-      },
-      "reconciles": true,
-      "reconcile_difference_seconds": 0,
-      "efficiency": 84.1
     }
   ],
   "hrv": {
-    "last": 80,
+    "last": 82,
     "mean": 82.24,
     "sd": 7.03,
     "min": 70,
@@ -170,43 +170,51 @@
     "count": 90
   },
   "rhr": {
-    "today": 45.0,
-    "mean_30": 46.3,
+    "today": 46.0,
+    "mean_30": 46.27,
     "sd_30": 1.66,
     "mean_14": 46.43,
     "count": 90
   },
   "sleep_stats": {
-    "median_seconds": 21600.0,
+    "median_seconds": 21480.0,
     "p75_seconds": 23932,
     "count": 74
   },
   "scores": {
-    "recovery": 51.2,
+    "recovery": 52.1,
     "band": "yellow",
-    "hrv_score": 43.62731152204838,
-    "rhr_score": 65.6626506024096,
-    "sleep_score": 51.9,
+    "hrv_score": 49.31721194879091,
+    "rhr_score": 53.25301204819281,
+    "sleep_score": 56.5,
     "weights": {
       "HRV": 0.5,
       "RHR": 0.25,
       "Sleep": 0.25
     },
-    "strain": 2.8,
+    "strain": 14.9,
     "target": "9.0-13.5"
   },
   "sleep_need": {
     "baseline_hours": 8.0,
-    "strain_hours": 0.51,
+    "strain_hours": 0.03,
     "debt_hours": 1.5,
     "naps_hours": 0.0,
-    "need_hours": 10.01
+    "need_hours": 9.53
   },
   "activities": [
     {
+      "date": "2026-09-17",
+      "name": "Interval",
+      "load": 38.59,
+      "duration_s": 4958.40478515625,
+      "avg_hr": 152.0,
+      "has_hr": true
+    },
+    {
       "date": "2026-09-15",
       "name": "Chennai Running",
-      "load": 23.11,
+      "load": 23.12,
       "duration_s": 2950.31298828125,
       "avg_hr": 135.0,
       "has_hr": true
@@ -230,7 +238,7 @@
     {
       "date": "2026-09-12",
       "name": "Chennai - 16K progressive",
-      "load": 29.37,
+      "load": 29.38,
       "duration_s": 6752.298828125,
       "avg_hr": 138.0,
       "has_hr": true
@@ -238,7 +246,7 @@
     {
       "date": "2026-09-11",
       "name": "Dance Fitness",
-      "load": 23.11,
+      "load": 23.12,
       "duration_s": 2624.52490234375,
       "avg_hr": 138.0,
       "has_hr": true
@@ -246,7 +254,7 @@
     {
       "date": "2026-09-11",
       "name": "Strength",
-      "load": 7.88,
+      "load": 7.89,
       "duration_s": 3106.8701171875,
       "avg_hr": 90.0,
       "has_hr": true
@@ -254,7 +262,7 @@
     {
       "date": "2026-09-10",
       "name": "Dance Fitness",
-      "load": 33.47,
+      "load": 33.48,
       "duration_s": 3017.15087890625,
       "avg_hr": 143.0,
       "has_hr": true
@@ -262,7 +270,7 @@
     {
       "date": "2026-09-10",
       "name": "Strength",
-      "load": 12.63,
+      "load": 12.64,
       "duration_s": 2983.035888671875,
       "avg_hr": 107.0,
       "has_hr": true
@@ -270,7 +278,7 @@
     {
       "date": "2026-09-10",
       "name": "Chennai - 1.2k Interval",
-      "load": 32.9,
+      "load": 32.91,
       "duration_s": 4703.166015625,
       "avg_hr": 146.0,
       "has_hr": true
@@ -278,7 +286,7 @@
     {
       "date": "2026-09-09",
       "name": "Strength",
-      "load": 12.33,
+      "load": 12.34,
       "duration_s": 2944.993896484375,
       "avg_hr": 105.0,
       "has_hr": true
@@ -294,7 +302,7 @@
     {
       "date": "2026-09-08",
       "name": "Chennai Running",
-      "load": 23.77,
+      "load": 23.78,
       "duration_s": 4804.509765625,
       "avg_hr": 133.0,
       "has_hr": true
@@ -302,7 +310,7 @@
     {
       "date": "2026-09-07",
       "name": "Strength",
-      "load": 12.44,
+      "load": 12.45,
       "duration_s": 2896.6689453125,
       "avg_hr": 106.0,
       "has_hr": true
@@ -310,7 +318,7 @@
     {
       "date": "2026-09-06",
       "name": "Dance Fitness",
-      "load": 23.1,
+      "load": 23.11,
       "duration_s": 3149.114013671875,
       "avg_hr": 125.0,
       "has_hr": true
@@ -350,7 +358,7 @@
     {
       "date": "2026-09-02",
       "name": "Strength",
-      "load": 17.52,
+      "load": 17.53,
       "duration_s": 2487.217041015625,
       "avg_hr": 130.0,
       "has_hr": true
@@ -358,7 +366,7 @@
     {
       "date": "2026-09-02",
       "name": "10k",
-      "load": 31.94,
+      "load": 31.95,
       "duration_s": 4023.64697265625,
       "avg_hr": 153.0,
       "has_hr": true
@@ -366,7 +374,7 @@
     {
       "date": "2026-09-01",
       "name": "Strength",
-      "load": 21.31,
+      "load": 21.32,
       "duration_s": 2666.152099609375,
       "avg_hr": 137.0,
       "has_hr": true
@@ -382,7 +390,7 @@
     {
       "date": "2026-08-30",
       "name": "Hyderabad Running",
-      "load": 38.52,
+      "load": 38.53,
       "duration_s": 8784.984375,
       "avg_hr": 150.0,
       "has_hr": true
@@ -398,7 +406,7 @@
     {
       "date": "2026-08-26",
       "name": "Dance Fitness",
-      "load": 26.46,
+      "load": 26.47,
       "duration_s": 3166.9619140625,
       "avg_hr": 132.0,
       "has_hr": true
@@ -414,7 +422,7 @@
     {
       "date": "2026-08-25",
       "name": "Strength",
-      "load": 15.02,
+      "load": 15.03,
       "duration_s": 6619.615234375,
       "avg_hr": 110.0,
       "has_hr": true
@@ -422,7 +430,7 @@
     {
       "date": "2026-08-24",
       "name": "Strength",
-      "load": 17.88,
+      "load": 17.89,
       "duration_s": 3027.448974609375,
       "avg_hr": 120.0,
       "has_hr": true
@@ -430,21 +438,17 @@
     {
       "date": "2026-08-24",
       "name": "Dance Fitness",
-      "load": 23.81,
+      "load": 23.82,
       "duration_s": 3017.4970703125,
       "avg_hr": 128.0,
-      "has_hr": true
-    },
-    {
-      "date": "2026-08-23",
-      "name": "Chennai Running",
-      "load": 12.99,
-      "duration_s": 3568.60205078125,
-      "avg_hr": 104.0,
       "has_hr": true
     }
   ],
   "strain_history": [
+    {
+      "date": "2026-09-17",
+      "strain": 14.9
+    },
     {
       "date": "2026-09-15",
       "strain": 14.0
@@ -468,14 +472,30 @@
     {
       "date": "2026-09-09",
       "strain": 8.4
-    },
-    {
-      "date": "2026-09-08",
-      "strain": 14.7
     }
   ],
   "quality": {
     "stage_checks": [
+      {
+        "date": "2026-09-17",
+        "slept_seconds": 19380,
+        "in_bed_seconds": 20220,
+        "stages": {
+          "Deep": 3540,
+          "Light": 12480,
+          "REM": 3360,
+          "Awake": 840
+        },
+        "reported_stages": {
+          "Deep": 3540,
+          "Light": 12480,
+          "REM": 3360,
+          "Awake": 840
+        },
+        "reconciles": true,
+        "reconcile_difference_seconds": 0,
+        "efficiency": 95.8
+      },
       {
         "date": "2026-09-16",
         "slept_seconds": 18720,
@@ -515,26 +535,6 @@
         "reconciles": true,
         "reconcile_difference_seconds": 0,
         "efficiency": 93.1
-      },
-      {
-        "date": "2026-09-14",
-        "slept_seconds": 22200,
-        "in_bed_seconds": 28260,
-        "stages": {
-          "Deep": 3780,
-          "Light": 12720,
-          "REM": 5700,
-          "Awake": 6060
-        },
-        "reported_stages": {
-          "Deep": 3780,
-          "Light": 12720,
-          "REM": 5700,
-          "Awake": 6060
-        },
-        "reconciles": true,
-        "reconcile_difference_seconds": 0,
-        "efficiency": 78.6
       }
     ],
     "deep_percent_range": [

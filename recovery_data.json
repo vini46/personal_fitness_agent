@@ -1,25 +1,45 @@
 {
   "latest_sleep": {
-    "date": "2026-09-27",
-    "slept_seconds": 16560,
-    "in_bed_seconds": 19200,
+    "date": "2026-09-28",
+    "slept_seconds": 29520,
+    "in_bed_seconds": 33480,
     "stages": {
-      "Deep": 3420,
-      "Light": 10500,
-      "REM": 2640,
-      "Awake": 2640
+      "Deep": 4680,
+      "Light": 19980,
+      "REM": 4860,
+      "Awake": 3960
     },
     "reported_stages": {
-      "Deep": 3420,
-      "Light": 10500,
-      "REM": 2640,
-      "Awake": 2640
+      "Deep": 4680,
+      "Light": 19980,
+      "REM": 4860,
+      "Awake": 3960
     },
     "reconciles": true,
     "reconcile_difference_seconds": 0,
-    "efficiency": 86.2
+    "efficiency": 88.2
   },
   "sleep_history": [
+    {
+      "date": "2026-09-28",
+      "slept_seconds": 29520,
+      "in_bed_seconds": 33480,
+      "stages": {
+        "Deep": 4680,
+        "Light": 19980,
+        "REM": 4860,
+        "Awake": 3960
+      },
+      "reported_stages": {
+        "Deep": 4680,
+        "Light": 19980,
+        "REM": 4860,
+        "Awake": 3960
+      },
+      "reconciles": true,
+      "reconcile_difference_seconds": 0,
+      "efficiency": 88.2
+    },
     {
       "date": "2026-09-27",
       "slept_seconds": 16560,
@@ -139,32 +159,12 @@
       "reconciles": true,
       "reconcile_difference_seconds": 0,
       "efficiency": 92.7
-    },
-    {
-      "date": "2026-09-21",
-      "slept_seconds": 26820,
-      "in_bed_seconds": 28200,
-      "stages": {
-        "Deep": 3660,
-        "Light": 18360,
-        "REM": 4800,
-        "Awake": 1380
-      },
-      "reported_stages": {
-        "Deep": 3660,
-        "Light": 18360,
-        "REM": 4800,
-        "Awake": 1380
-      },
-      "reconciles": true,
-      "reconcile_difference_seconds": 0,
-      "efficiency": 95.1
     }
   ],
   "hrv": {
-    "last": 85,
-    "mean": 81.86,
-    "sd": 7.47,
+    "last": 81,
+    "mean": 81.97,
+    "sd": 7.38,
     "min": 67,
     "max": 108,
     "count": 90
@@ -177,30 +177,30 @@
     "count": 90
   },
   "sleep_stats": {
-    "median_seconds": 21360,
-    "p75_seconds": 24291,
+    "median_seconds": 21600,
+    "p75_seconds": 24540,
     "count": 73
   },
   "scores": {
-    "recovery": 55.2,
+    "recovery": 57.7,
     "band": "yellow",
-    "hrv_score": 58.40696117804552,
+    "hrv_score": 47.37127371273713,
     "rhr_score": 55.81081081081081,
-    "sleep_score": 48.3,
+    "sleep_score": 80.3,
     "weights": {
       "HRV": 0.5,
       "RHR": 0.25,
       "Sleep": 0.25
     },
-    "strain": 15.9,
+    "strain": 2.8,
     "target": "9.0-13.5"
   },
   "sleep_need": {
     "baseline_hours": 8.0,
-    "strain_hours": 0.03,
+    "strain_hours": 0.71,
     "debt_hours": 1.5,
     "naps_hours": 0.0,
-    "need_hours": 9.53
+    "need_hours": 10.21
   },
   "activities": [
     {
@@ -477,6 +477,26 @@
   "quality": {
     "stage_checks": [
       {
+        "date": "2026-09-28",
+        "slept_seconds": 29520,
+        "in_bed_seconds": 33480,
+        "stages": {
+          "Deep": 4680,
+          "Light": 19980,
+          "REM": 4860,
+          "Awake": 3960
+        },
+        "reported_stages": {
+          "Deep": 4680,
+          "Light": 19980,
+          "REM": 4860,
+          "Awake": 3960
+        },
+        "reconciles": true,
+        "reconcile_difference_seconds": 0,
+        "efficiency": 88.2
+      },
+      {
         "date": "2026-09-27",
         "slept_seconds": 16560,
         "in_bed_seconds": 19200,
@@ -515,26 +535,6 @@
         "reconciles": true,
         "reconcile_difference_seconds": 0,
         "efficiency": 85.2
-      },
-      {
-        "date": "2026-09-25",
-        "slept_seconds": 12300,
-        "in_bed_seconds": 13500,
-        "stages": {
-          "Deep": 3540,
-          "Light": 7260,
-          "REM": 1500,
-          "Awake": 1200
-        },
-        "reported_stages": {
-          "Deep": 3540,
-          "Light": 7260,
-          "REM": 1500,
-          "Awake": 1200
-        },
-        "reconciles": true,
-        "reconcile_difference_seconds": 0,
-        "efficiency": 91.1
       }
     ],
     "deep_percent_range": [

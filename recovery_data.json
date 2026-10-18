@@ -1,25 +1,45 @@
 {
   "latest_sleep": {
-    "date": "2026-10-17",
-    "slept_seconds": 13560,
-    "in_bed_seconds": 13740,
+    "date": "2026-10-18",
+    "slept_seconds": 15300,
+    "in_bed_seconds": 15540,
     "stages": {
       "Deep": 3720,
-      "Light": 6480,
-      "REM": 3360,
-      "Awake": 180
+      "Light": 7860,
+      "REM": 3720,
+      "Awake": 240
     },
     "reported_stages": {
       "Deep": 3720,
-      "Light": 6480,
-      "REM": 3360,
-      "Awake": 180
+      "Light": 7860,
+      "REM": 3720,
+      "Awake": 240
     },
     "reconciles": true,
     "reconcile_difference_seconds": 0,
-    "efficiency": 98.7
+    "efficiency": 98.5
   },
   "sleep_history": [
+    {
+      "date": "2026-10-18",
+      "slept_seconds": 15300,
+      "in_bed_seconds": 15540,
+      "stages": {
+        "Deep": 3720,
+        "Light": 7860,
+        "REM": 3720,
+        "Awake": 240
+      },
+      "reported_stages": {
+        "Deep": 3720,
+        "Light": 7860,
+        "REM": 3720,
+        "Awake": 240
+      },
+      "reconciles": true,
+      "reconcile_difference_seconds": 0,
+      "efficiency": 98.5
+    },
     {
       "date": "2026-10-17",
       "slept_seconds": 13560,
@@ -139,30 +159,10 @@
       "reconciles": true,
       "reconcile_difference_seconds": 0,
       "efficiency": 76.8
-    },
-    {
-      "date": "2026-10-11",
-      "slept_seconds": 17460,
-      "in_bed_seconds": 18840,
-      "stages": {
-        "Deep": 5880,
-        "Light": 8160,
-        "REM": 3420,
-        "Awake": 1380
-      },
-      "reported_stages": {
-        "Deep": 5880,
-        "Light": 8160,
-        "REM": 3420,
-        "Awake": 1380
-      },
-      "reconciles": true,
-      "reconcile_difference_seconds": 0,
-      "efficiency": 92.7
     }
   ],
   "hrv": {
-    "last": 76,
+    "last": 77,
     "mean": 80.98,
     "sd": 7.47,
     "min": 67,
@@ -177,32 +177,40 @@
     "count": 90
   },
   "sleep_stats": {
-    "median_seconds": 22140,
-    "p75_seconds": 25080,
-    "count": 71
+    "median_seconds": 22110.0,
+    "p75_seconds": 24900,
+    "count": 72
   },
   "scores": {
-    "recovery": 45.1,
+    "recovery": 40.6,
     "band": "yellow",
-    "hrv_score": 36.66666666666666,
+    "hrv_score": 39.34404283801873,
     "rhr_score": 39.26174496644299,
-    "sleep_score": 67.6,
+    "sleep_score": 44.6,
     "weights": {
       "HRV": 0.5,
       "RHR": 0.25,
       "Sleep": 0.25
     },
-    "strain": 2.8,
+    "strain": 17.1,
     "target": "9.0-13.5"
   },
   "sleep_need": {
     "baseline_hours": 8.0,
-    "strain_hours": 0.3,
+    "strain_hours": 0.03,
     "debt_hours": 1.5,
-    "naps_hours": 4.23,
-    "need_hours": 5.57
+    "naps_hours": 0.0,
+    "need_hours": 9.53
   },
   "activities": [
+    {
+      "date": "2026-10-18",
+      "name": "New Delhi Running",
+      "load": 52.83,
+      "duration_s": 7168.5908203125,
+      "avg_hr": 164.0,
+      "has_hr": true
+    },
     {
       "date": "2026-10-16",
       "name": "Run",
@@ -434,17 +442,13 @@
       "duration_s": 3017.15087890625,
       "avg_hr": 143.0,
       "has_hr": true
-    },
-    {
-      "date": "2026-09-10",
-      "name": "Strength",
-      "load": 12.43,
-      "duration_s": 2983.035888671875,
-      "avg_hr": 107.0,
-      "has_hr": true
     }
   ],
   "strain_history": [
+    {
+      "date": "2026-10-18",
+      "strain": 17.1
+    },
     {
       "date": "2026-10-16",
       "strain": 11.7
@@ -468,14 +472,30 @@
     {
       "date": "2026-10-06",
       "strain": 11.0
-    },
-    {
-      "date": "2026-10-05",
-      "strain": 9.2
     }
   ],
   "quality": {
     "stage_checks": [
+      {
+        "date": "2026-10-18",
+        "slept_seconds": 15300,
+        "in_bed_seconds": 15540,
+        "stages": {
+          "Deep": 3720,
+          "Light": 7860,
+          "REM": 3720,
+          "Awake": 240
+        },
+        "reported_stages": {
+          "Deep": 3720,
+          "Light": 7860,
+          "REM": 3720,
+          "Awake": 240
+        },
+        "reconciles": true,
+        "reconcile_difference_seconds": 0,
+        "efficiency": 98.5
+      },
       {
         "date": "2026-10-17",
         "slept_seconds": 13560,
@@ -515,26 +535,6 @@
         "reconciles": true,
         "reconcile_difference_seconds": 0,
         "efficiency": 94.7
-      },
-      {
-        "date": "2026-10-15",
-        "slept_seconds": 16380,
-        "in_bed_seconds": 18000,
-        "stages": {
-          "Deep": 5040,
-          "Light": 8760,
-          "REM": 2580,
-          "Awake": 1620
-        },
-        "reported_stages": {
-          "Deep": 5040,
-          "Light": 8760,
-          "REM": 2580,
-          "Awake": 1620
-        },
-        "reconciles": true,
-        "reconcile_difference_seconds": 0,
-        "efficiency": 91.0
       }
     ],
     "deep_percent_range": [
